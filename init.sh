@@ -1,6 +1,7 @@
-# create a new solution with default .gitignore
+# create a new solution with default .gitignore & .editorconfig
 dotnet new sln
 dotnet new gitignore
+dotnet new editorconfig
 
 # create project folders
 mkdir HurryUpHaul.Contracts
