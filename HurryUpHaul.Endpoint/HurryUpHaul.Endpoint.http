@@ -1,6 +1,0 @@
-@HurryUpHaul.Endpoint_HostAddress = http://localhost:5028
-
-GET {{HurryUpHaul.Endpoint_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

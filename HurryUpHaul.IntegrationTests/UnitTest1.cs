@@ -1,4 +1,4 @@
-namespace HurryUpHaul.ServiceTests;
+namespace HurryUpHaul.IntegrationTests;
 
 public class UnitTest1
 {

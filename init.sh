@@ -5,8 +5,8 @@ dotnet new gitignore
 # create project folders
 mkdir HurryUpHaul.Contracts
 mkdir HurryUpHaul.Domain
-mkdir HurryUpHaul.Endpoint
-mkdir HurryUpHaul.ServiceTests
+mkdir HurryUpHaul.Api
+mkdir HurryUpHaul.IntegrationTests
 mkdir HurryUpHaul.UnitTests
 
 # create projects
@@ -14,9 +14,9 @@ cd HurryUpHaul.Contracts
 dotnet new classlib
 cd ../HurryUpHaul.Domain
 dotnet new classlib
-cd ../HurryUpHaul.Endpoint
+cd ../HurryUpHaul.Api
 dotnet new webapi
-cd ../HurryUpHaul.ServiceTests
+cd ../HurryUpHaul.IntegrationTests
 dotnet new xunit
 cd ../HurryUpHaul.UnitTests
 dotnet new xunit
@@ -25,12 +25,12 @@ dotnet new xunit
 cd ..
 dotnet sln add HurryUpHaul.Contracts/HurryUpHaul.Contracts.csproj
 dotnet sln add HurryUpHaul.Domain/HurryUpHaul.Domain.csproj
-dotnet sln add HurryUpHaul.Endpoint/HurryUpHaul.Endpoint.csproj
-dotnet sln add HurryUpHaul.ServiceTests/HurryUpHaul.ServiceTests.csproj
+dotnet sln add HurryUpHaul.Api/HurryUpHaul.Api.csproj
+dotnet sln add HurryUpHaul.IntegrationTests/HurryUpHaul.IntegrationTests.csproj
 dotnet sln add HurryUpHaul.UnitTests/HurryUpHaul.UnitTests.csproj
 
 # add references
-dotnet add HurryUpHaul.Endpoint/HurryUpHaul.Endpoint.csproj reference HurryUpHaul.Contracts/HurryUpHaul.Contracts.csproj
-dotnet add HurryUpHaul.Endpoint/HurryUpHaul.Endpoint.csproj reference HurryUpHaul.Domain/HurryUpHaul.Domain.csproj
-dotnet add HurryUpHaul.ServiceTests/HurryUpHaul.ServiceTests.csproj reference HurryUpHaul.Endpoint/HurryUpHaul.Endpoint.csproj
+dotnet add HurryUpHaul.Api/HurryUpHaul.Api.csproj reference HurryUpHaul.Contracts/HurryUpHaul.Contracts.csproj
+dotnet add HurryUpHaul.Api/HurryUpHaul.Api.csproj reference HurryUpHaul.Domain/HurryUpHaul.Domain.csproj
+dotnet add HurryUpHaul.IntegrationTests/HurryUpHaul.IntegrationTests.csproj reference HurryUpHaul.Api/HurryUpHaul.Api.csproj
 dotnet add HurryUpHaul.UnitTests/HurryUpHaul.UnitTests.csproj reference HurryUpHaul.Domain/HurryUpHaul.Domain.csproj
