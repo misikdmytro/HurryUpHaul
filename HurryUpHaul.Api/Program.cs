@@ -1,5 +1,10 @@
 using System.Reflection;
 
+using FluentValidation;
+
+using HurryUpHaul.Api.Filters;
+using HurryUpHaul.Api.Validators;
+using HurryUpHaul.Contracts.Http;
 using HurryUpHaul.Domain;
 
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +12,10 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<AppExceptionFilter>();
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -25,6 +33,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddDomainServices(builder.Configuration.GetConnectionString("AppDbConnection"));
+
+builder.Services.AddScoped<IValidator<CreateOrderRequest>, CreateOrderRequestValidator>();
 
 var app = builder.Build();
 

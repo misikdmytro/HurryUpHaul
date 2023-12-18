@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text;
 
@@ -13,38 +12,67 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 using Newtonsoft.Json;
 
-public class OrdersTests : IClassFixture<WebApplicationFactory<Program>>
+namespace HurryUpHaul.IntegrationTests
 {
-    private readonly WebApplicationFactory<Program> _factory;
-    private readonly Faker _faker;
-
-    public OrdersTests(WebApplicationFactory<Program> factory)
+    public class OrdersTests : IClassFixture<WebApplicationFactory<Program>>
     {
-        _factory = factory;
-        _faker = new Faker();
-    }
+        private readonly WebApplicationFactory<Program> _factory;
+        private readonly Faker _faker;
 
-    [Fact]
-    public async Task CreateOrderShouldDoIt()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var request = new CreateOrderRequest
+        public OrdersTests(WebApplicationFactory<Program> factory)
         {
-            Details = _faker.Lorem.Sentence()
-        };
-        using var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
+            _factory = factory;
+            _faker = new Faker();
+        }
 
-        // Act
-        using var response = await client.PostAsync("api/orders", content);
+        [Fact]
+        public async Task CreateOrderShouldDoIt()
+        {
+            // Arrange
+            var client = _factory.CreateClient();
+            var request = new CreateOrderRequest
+            {
+                Details = _faker.Lorem.Sentence()
+            };
+            using var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
 
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
-        response.Headers.Location.Should().NotBeNull();
+            // Act
+            using var response = await client.PostAsync("api/orders", content);
 
-        var responseContent = await response.Content.ReadFromJsonAsync<CreateOrderResponse>();
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.Created);
+            response.Headers.Location.Should().NotBeNull();
 
-        responseContent.Should().NotBeNull();
-        responseContent.Id.Should().NotBeNullOrEmpty();
+            var responseContent = await response.Content.ReadFromJsonAsync<CreateOrderResponse>();
+
+            responseContent.Should().NotBeNull();
+            responseContent.Id.Should().NotBeNullOrEmpty();
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        public async Task CreateOrderShouldReturnBadRequestWhenDetailsIsNullOrEmpty(string details)
+        {
+            // Arrange
+            var client = _factory.CreateClient();
+            var request = new CreateOrderRequest
+            {
+                Details = details
+            };
+            using var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
+
+            // Act
+            using var response = await client.PostAsync("api/orders", content);
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            var responseContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+            responseContent.Should().NotBeNull();
+            responseContent.Errors.Should().HaveCount(1);
+            responseContent.Errors.First().Should().Be("'Details' must not be empty.");
+        }
     }
 }

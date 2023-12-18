@@ -11,6 +11,7 @@ namespace HurryUpHaul.Domain.Models.Database
         public Guid Id { get; set; }
 
         [Column("details")]
+        [MaxLength(2000)]
         public string Details { get; set; }
 
         [Column("status")]

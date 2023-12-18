@@ -17,7 +17,7 @@ namespace HurryUpHaul.Domain.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    details = table.Column<string>(type: "text", nullable: true),
+                    details = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     status = table.Column<int>(type: "integer", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     last_updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)

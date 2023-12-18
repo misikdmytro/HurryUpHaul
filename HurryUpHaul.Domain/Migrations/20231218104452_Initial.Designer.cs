@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HurryUpHaul.Domain.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20231215145827_Initial")]
+    [Migration("20231218104452_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -37,7 +37,8 @@ namespace HurryUpHaul.Domain.Migrations
                         .HasColumnName("created_at");
 
                     b.Property<string>("Details")
-                        .HasColumnType("text")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
                         .HasColumnName("details");
 
                     b.Property<DateTime>("LastUpdatedAt")

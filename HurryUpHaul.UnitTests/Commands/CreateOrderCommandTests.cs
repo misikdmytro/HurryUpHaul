@@ -12,6 +12,7 @@ using HurryUpHaul.Domain.Models.Events;
 using MediatR;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 using Moq;
 
@@ -36,7 +37,7 @@ namespace HurryUpHaul.UnitTests.Commands
 
             _dateTimeProvider = new Mock<IDateTimeProvider>();
 
-            _handler = new CreateOrderCommandHandler(_appDbContext, _dateTimeProvider.Object);
+            _handler = new CreateOrderCommandHandler(_appDbContext, _dateTimeProvider.Object, Mock.Of<ILogger<CreateOrderCommandHandler>>());
 
             _faker = new Faker();
         }
@@ -87,7 +88,6 @@ namespace HurryUpHaul.UnitTests.Commands
             await DisposeAsync(true);
             GC.SuppressFinalize(this);
         }
-
 
         protected virtual async ValueTask DisposeAsync(bool disposing)
         {

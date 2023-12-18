@@ -1,10 +1,13 @@
 using HurryUpHaul.Domain.Constants;
 using HurryUpHaul.Domain.Databases;
+using HurryUpHaul.Domain.Handlers;
 using HurryUpHaul.Domain.Helpers;
 using HurryUpHaul.Domain.Models.Database;
 using HurryUpHaul.Domain.Models.Events;
 
 using MediatR;
+
+using Microsoft.Extensions.Logging;
 
 namespace HurryUpHaul.Domain.Commands
 {
@@ -18,18 +21,20 @@ namespace HurryUpHaul.Domain.Commands
         public string OrderId { get; init; }
     }
 
-    internal class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, CreateOrderCommandResult>
+    internal class CreateOrderCommandHandler : BaseHandler<CreateOrderCommand, CreateOrderCommandResult>
     {
         private readonly AppDbContext _dbContext;
         private readonly IDateTimeProvider _dateTimeProvider;
 
-        public CreateOrderCommandHandler(AppDbContext dbContext, IDateTimeProvider dateTimeProvider)
+        public CreateOrderCommandHandler(AppDbContext dbContext,
+            IDateTimeProvider dateTimeProvider,
+            ILogger<CreateOrderCommandHandler> logger) : base(logger)
         {
             _dbContext = dbContext;
             _dateTimeProvider = dateTimeProvider;
         }
 
-        public async Task<CreateOrderCommandResult> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
+        protected override async Task<CreateOrderCommandResult> HandleInternal(CreateOrderCommand request, CancellationToken cancellationToken)
         {
             var orderId = Guid.NewGuid();
             var now = _dateTimeProvider.Now;

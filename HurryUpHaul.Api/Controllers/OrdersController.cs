@@ -1,3 +1,5 @@
+using FluentValidation;
+
 using HurryUpHaul.Contracts.Http;
 using HurryUpHaul.Domain.Commands;
 
@@ -12,10 +14,12 @@ namespace HurryUpHaul.Api.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IValidator<CreateOrderRequest> _validator;
 
-        public OrdersController(IMediator mediator)
+        public OrdersController(IMediator mediator, IValidator<CreateOrderRequest> validator)
         {
             _mediator = mediator;
+            _validator = validator;
         }
 
         /// <summary>
@@ -42,9 +46,15 @@ namespace HurryUpHaul.Api.Controllers
         [ProducesResponseType(500)]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request, CancellationToken cancellationToken = default)
         {
-            // ToDo: validation
-            // ToDo: error handling
-            // ToDo: logging
+            var validationResult = await _validator.ValidateAsync(request, cancellationToken);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    Errors = validationResult.Errors.Select(x => x.ErrorMessage).ToArray()
+                });
+            }
+
             var command = new CreateOrderCommand
             {
                 OrderDetails = request.Details

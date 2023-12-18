@@ -34,7 +34,8 @@ namespace HurryUpHaul.Domain.Migrations
                         .HasColumnName("created_at");
 
                     b.Property<string>("Details")
-                        .HasColumnType("text")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
                         .HasColumnName("details");
 
                     b.Property<DateTime>("LastUpdatedAt")
