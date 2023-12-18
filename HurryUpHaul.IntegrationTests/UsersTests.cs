@@ -45,7 +45,7 @@ namespace HurryUpHaul.IntegrationTests
         }
 
         [Theory]
-        [InlineData(null, "TestPassword123!?", "'Username' must not be empty.", "Username must only contain the following characters: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+")]
+        [InlineData(null, "TestPassword123!?", "'Username' must not be empty.")]
         [InlineData("", "TestPassword123!?", "'Username' must not be empty.")]
         [InlineData("TestUser", null, "'Password' must not be empty.")]
         [InlineData("TestUser", "", "'Password' must not be empty.", "The length of 'Password' must be at least 8 characters. You entered 0 characters.")]
@@ -74,7 +74,6 @@ namespace HurryUpHaul.IntegrationTests
             var responseContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
 
             responseContent.Should().NotBeNull();
-            responseContent.Errors.Should().NotBeNullOrEmpty();
             responseContent.Errors.Should().BeEquivalentTo(errors);
         }
     }
