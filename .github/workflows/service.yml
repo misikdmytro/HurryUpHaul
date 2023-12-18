@@ -21,5 +21,9 @@ jobs:
         run: dotnet restore
       - name: Build
         run: dotnet build --no-restore
+      - name: Docker Compose Build
+        run: docker-compose build
+      - name: Docker Compose Up
+        run: docker-compose up -d 
       - name: Test
         run: dotnet test --no-restore --verbosity normal
