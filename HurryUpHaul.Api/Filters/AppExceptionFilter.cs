@@ -20,7 +20,7 @@ namespace HurryUpHaul.Api.Filters
 
             context.Result = new ObjectResult(new ErrorResponse
             {
-                Errors = [context.Exception.Message]
+                Errors = ["An unexpected error occurred"]
             })
             {
                 StatusCode = 500
