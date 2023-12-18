@@ -25,5 +25,9 @@ jobs:
         run: docker-compose build
       - name: Docker Compose Up
         run: docker-compose up -d 
+      - name: Tools Restore
+        run: dotnet tool restore
+      - name: EF Core Migrations
+        run: dotnet ef database update -s ./HurryUpHaul.Api/
       - name: Test
         run: dotnet test --no-restore --verbosity normal
