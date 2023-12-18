@@ -9,42 +9,43 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HurryUpHaul.Api.Controllers
 {
-    [Route("api/orders")]
+    [Route("api/users")]
     [ApiController]
-    public class OrdersController : ControllerBase
+    public class UsersController : ControllerBase
     {
         private readonly IMediator _mediator;
-        private readonly IValidator<CreateOrderRequest> _validator;
+        private readonly IValidator<RegisterUserRequest> _validator;
 
-        public OrdersController(IMediator mediator, IValidator<CreateOrderRequest> validator)
+        public UsersController(IMediator mediator, IValidator<RegisterUserRequest> validator)
         {
             _mediator = mediator;
             _validator = validator;
         }
 
         /// <summary>
-        /// Creates a new order
+        /// Registers a new user
         /// </summary>
-        /// <param name="request">Create order request</param>
+        /// <param name="request">Register user request</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>Created order ID</returns>
+        /// <returns>Succeeded</returns>
         /// <remarks>
         /// Sample request:
         /// 
-        ///    POST /api/orders
-        ///   {
-        ///     details: "Test Order Details"
-        ///   }
+        ///   POST /api/users
+        ///  {
+        ///     username: "TestUser",
+        ///     password: "TestPassword"
+        ///  }
         /// 
         /// </remarks>
-        /// <response code="201">Order created</response>
+        /// <response code="200">User registered</response>
         /// <response code="400">Invalid request</response>
         /// <response code="500">Internal server error</response>
         [HttpPost]
-        [ProducesResponseType(typeof(CreateOrderResponse), 201)]
+        [ProducesResponseType(typeof(RegisterUserResponse), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RegisterUser([FromBody] RegisterUserRequest request, CancellationToken cancellationToken = default)
         {
             var validationResult = await _validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
@@ -55,17 +56,22 @@ namespace HurryUpHaul.Api.Controllers
                 });
             }
 
-            var command = new CreateOrderCommand
+            var command = new RegisterUserCommand
             {
-                OrderDetails = request.Details
+                Username = request.Username,
+                Password = request.Password
             };
 
             var result = await _mediator.Send(command, cancellationToken);
-
-            return Created($"/api/orders/{result.OrderId}", new CreateOrderResponse
+            if (!result.Success)
             {
-                Id = result.OrderId
-            });
+                return BadRequest(new ErrorResponse
+                {
+                    Errors = result.Errors.Select(x => x.Description).ToArray()
+                });
+            }
+
+            return Ok(new RegisterUserResponse());
         }
     }
 }

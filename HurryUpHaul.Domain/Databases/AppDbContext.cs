@@ -2,11 +2,13 @@ using System.Text.Json;
 
 using HurryUpHaul.Domain.Models.Database;
 
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace HurryUpHaul.Domain.Databases
 {
-    internal class AppDbContext : DbContext
+    internal class AppDbContext : IdentityDbContext<IdentityUser>
     {
         public DbSet<Order> Orders { get; init; }
         public DbSet<OrderEvent> OrderEvents { get; init; }
@@ -17,6 +19,8 @@ namespace HurryUpHaul.Domain.Databases
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder
                 .Entity<OrderEvent>()
                 .Property(e => e.Payload)
