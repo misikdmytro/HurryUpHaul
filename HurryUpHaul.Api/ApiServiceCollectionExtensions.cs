@@ -12,7 +12,8 @@ namespace HurryUpHaul.Api
         {
             return services
                 .AddScoped<IValidator<CreateOrderRequest>, CreateOrderRequestValidator>()
-                .AddScoped<IValidator<RegisterUserRequest>, RegisterUserRequestValidator>();
+                .AddScoped<IValidator<RegisterUserRequest>, RegisterUserRequestValidator>()
+                .AddScoped<IValidator<AuthenticateUserRequest>, AuthenticateUserRequestValidator>();
         }
     }
 }

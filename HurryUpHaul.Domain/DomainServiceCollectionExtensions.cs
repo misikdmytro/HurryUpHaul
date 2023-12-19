@@ -1,17 +1,20 @@
 using HurryUpHaul.Domain.Commands;
+using HurryUpHaul.Domain.Configuration;
 using HurryUpHaul.Domain.Databases;
 using HurryUpHaul.Domain.Helpers;
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HurryUpHaul.Domain
 {
     public static class DomainServiceCollectionExtensions
     {
-        public static IServiceCollection AddDomainServices(this IServiceCollection services, string connectionString)
+        public static IServiceCollection AddDomainServices(this IServiceCollection services,
+            string connectionString,
+            IConfiguration jwt)
         {
             services
                 .AddIdentity<IdentityUser, IdentityRole>(options =>
@@ -25,6 +28,8 @@ namespace HurryUpHaul.Domain
                 .AddDefaultTokenProviders();
 
             return services
+                .AddOptions()
+                .Configure<JwtSettings>(jwt)
                 .AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CreateOrderCommand>())
                 .AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString))
                 .AddSingleton<IDateTimeProvider, DateTimeProvider>();

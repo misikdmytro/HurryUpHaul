@@ -2,8 +2,6 @@ using System.Net;
 using System.Net.Mime;
 using System.Text;
 
-using Bogus;
-
 using FluentAssertions;
 
 using HurryUpHaul.Contracts.Http;
@@ -14,34 +12,59 @@ using Newtonsoft.Json;
 
 namespace HurryUpHaul.IntegrationTests
 {
-    public class UsersTests : IClassFixture<WebApplicationFactory<Program>>
+    public class UsersTests : Base
     {
-        private readonly WebApplicationFactory<Program> _factory;
-        private readonly Faker _faker;
-
-        public UsersTests(WebApplicationFactory<Program> factory)
+        public UsersTests(WebApplicationFactory<Program> factory) : base(factory)
         {
-            _factory = factory;
-            _faker = new Faker();
         }
 
         [Fact]
-        public async Task RegisterUserShouldDoIt()
+        public async Task RegisterAndAuthenticateUserShouldDoIt()
         {
-            // Arrange
+            // 1. registration
             var client = _factory.CreateClient();
-            var request = new RegisterUserRequest
+            var registerRequest = new RegisterUserRequest
             {
                 Username = $"test_{_faker.Database.Random.Uuid():N}",
                 Password = "TestPassword123!?"
             };
-            using var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
+            using var registerContent = new StringContent(JsonConvert.SerializeObject(registerRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
 
-            // Act
-            using var response = await client.PostAsync("api/users", content);
+            using var registerResponse = await client.PostAsync("api/users", registerContent);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            // 2. authentication
+            var authenticateRequest = new AuthenticateUserRequest
+            {
+                Username = registerRequest.Username,
+                Password = registerRequest.Password
+            };
+
+            using var authenticateContent = new StringContent(JsonConvert.SerializeObject(authenticateRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
+
+            using var authenticateResponse = await client.PostAsync("api/users/token", authenticateContent);
+
+            authenticateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var authenticateResponseContent = await authenticateResponse.Content.ReadFromJsonAsync<AuthenticateUserResponse>();
+
+            authenticateResponseContent.Should().NotBeNull();
+            authenticateResponseContent.Token.Should().NotBeNullOrEmpty();
+
+            // 3. me
+            using var meHttpRequest = new HttpRequestMessage(HttpMethod.Get, "api/users/me");
+            meHttpRequest.Headers.Add("Authorization", $"Bearer {authenticateResponseContent.Token}");
+
+            using var meResponse = await client.SendAsync(meHttpRequest);
+
+            meResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var meResponseContent = await meResponse.Content.ReadFromJsonAsync<MeResponse>();
+
+            meResponseContent.Should().NotBeNull();
+            meResponseContent.Username.Should().Be(registerRequest.Username);
+            meResponseContent.Role.Should().Be("customer");
         }
 
         [Theory]
@@ -75,6 +98,67 @@ namespace HurryUpHaul.IntegrationTests
 
             responseContent.Should().NotBeNull();
             responseContent.Errors.Should().BeEquivalentTo(errors);
+        }
+
+        [Fact]
+        public async Task AuthenticateUserShouldReturnBadRequestWhenUserDoesNotExists()
+        {
+            // Arrange
+            var client = _factory.CreateClient();
+            var request = new AuthenticateUserRequest
+            {
+                Username = $"test_{_faker.Database.Random.Uuid():N}",
+                Password = "TestPassword123!?"
+            };
+            using var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
+
+            // Act
+            using var response = await client.PostAsync("api/users/token", content);
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            var responseContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+            responseContent.Should().NotBeNull();
+            responseContent.Errors.Should().HaveCount(1);
+            responseContent.Errors.First().Should().Be("Invalid username or password.");
+        }
+
+        [Fact]
+        public async Task AuthenticateUserShouldReturnBadRequestWhenPasswordIsIncorrect()
+        {
+            // Arrange
+            var client = _factory.CreateClient();
+            var registerRequest = new RegisterUserRequest
+            {
+                Username = $"test_{_faker.Database.Random.Uuid():N}",
+                Password = "TestPassword123!?"
+            };
+            using var registerContent = new StringContent(JsonConvert.SerializeObject(registerRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
+
+            using var registerResponse = await client.PostAsync("api/users", registerContent);
+
+            registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var authenticateRequest = new AuthenticateUserRequest
+            {
+                Username = registerRequest.Username,
+                Password = "IncorrectPassword123!?"
+            };
+            using var authenticateContent = new StringContent(JsonConvert.SerializeObject(authenticateRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
+
+            // Act
+            using var authenticateResponse = await client.PostAsync("api/users/token", authenticateContent);
+
+            // Assert
+            authenticateResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            var authenticateResponseContent = await authenticateResponse.Content.ReadFromJsonAsync<ErrorResponse>();
+
+            authenticateResponseContent.Should().NotBeNull();
+            authenticateResponseContent.Errors.Should().HaveCount(1);
+            authenticateResponseContent.Errors.First().Should().Be("Invalid username or password.");
         }
     }
 }

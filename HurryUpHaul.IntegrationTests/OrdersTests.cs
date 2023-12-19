@@ -2,8 +2,6 @@ using System.Net;
 using System.Net.Mime;
 using System.Text;
 
-using Bogus;
-
 using FluentAssertions;
 
 using HurryUpHaul.Contracts.Http;
@@ -14,30 +12,29 @@ using Newtonsoft.Json;
 
 namespace HurryUpHaul.IntegrationTests
 {
-    public class OrdersTests : IClassFixture<WebApplicationFactory<Program>>
+    public class OrdersTests : Base
     {
-        private readonly WebApplicationFactory<Program> _factory;
-        private readonly Faker _faker;
-
-        public OrdersTests(WebApplicationFactory<Program> factory)
+        public OrdersTests(WebApplicationFactory<Program> factory) : base(factory)
         {
-            _factory = factory;
-            _faker = new Faker();
         }
 
         [Fact]
         public async Task CreateOrderShouldDoIt()
         {
             // Arrange
+            var token = await CreateTestUser();
+
             var client = _factory.CreateClient();
             var request = new CreateOrderRequest
             {
                 Details = _faker.Lorem.Sentence()
             };
-            using var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/orders");
+            httpRequest.Content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
+            httpRequest.Headers.Add("Authorization", $"Bearer {token}");
 
             // Act
-            using var response = await client.PostAsync("api/orders", content);
+            using var response = await client.SendAsync(httpRequest);
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -55,15 +52,19 @@ namespace HurryUpHaul.IntegrationTests
         public async Task CreateOrderShouldReturnBadRequestWhenDetailsIsNullOrEmpty(string details)
         {
             // Arrange
+            var token = await CreateTestUser();
+
             var client = _factory.CreateClient();
             var request = new CreateOrderRequest
             {
                 Details = details
             };
-            using var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/orders");
+            httpRequest.Content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
+            httpRequest.Headers.Add("Authorization", $"Bearer {token}");
 
             // Act
-            using var response = await client.PostAsync("api/orders", content);
+            using var response = await client.SendAsync(httpRequest);
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -73,6 +74,25 @@ namespace HurryUpHaul.IntegrationTests
             responseContent.Should().NotBeNull();
             responseContent.Errors.Should().HaveCount(1);
             responseContent.Errors.First().Should().Be("'Details' must not be empty.");
+        }
+
+        [Fact]
+        public async Task CreateOrderShouldReturnUnauthorizedWhenNotAuthenticated()
+        {
+            // Arrange
+            var client = _factory.CreateClient();
+            var request = new CreateOrderRequest
+            {
+                Details = _faker.Lorem.Sentence()
+            };
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/orders");
+            httpRequest.Content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
+
+            // Act
+            using var response = await client.SendAsync(httpRequest);
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         }
     }
 }

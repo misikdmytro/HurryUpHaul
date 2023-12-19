@@ -56,9 +56,10 @@ namespace HurryUpHaul.Domain.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    details = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    details = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
                     status = table.Column<int>(type: "integer", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    created_by = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     last_updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -235,6 +236,11 @@ namespace HurryUpHaul.Domain.Migrations
                 name: "IX_order_events_order_id",
                 table: "order_events",
                 column: "order_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_orders_created_by",
+                table: "orders",
+                column: "created_by");
         }
 
         /// <inheritdoc />

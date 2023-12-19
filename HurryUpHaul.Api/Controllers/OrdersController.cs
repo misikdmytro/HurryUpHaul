@@ -1,3 +1,5 @@
+using System.Net.Mime;
+
 using FluentValidation;
 
 using HurryUpHaul.Contracts.Http;
@@ -5,12 +7,15 @@ using HurryUpHaul.Domain.Commands;
 
 using MediatR;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HurryUpHaul.Api.Controllers
 {
     [Route("api/orders")]
     [ApiController]
+    [Consumes(MediaTypeNames.Application.Json)]
+    [Produces(MediaTypeNames.Application.Json)]
     public class OrdersController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -39,11 +44,16 @@ namespace HurryUpHaul.Api.Controllers
         /// </remarks>
         /// <response code="201">Order created</response>
         /// <response code="400">Invalid request</response>
+        /// <response code="401">Unauthorized</response>
+        /// <response code="403">Forbidden</response>
         /// <response code="500">Internal server error</response>
         [HttpPost]
         [ProducesResponseType(typeof(CreateOrderResponse), 201)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(500)]
+        [Authorize(Policy = "Customer")]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request, CancellationToken cancellationToken = default)
         {
             var validationResult = await _validator.ValidateAsync(request, cancellationToken);
@@ -57,6 +67,7 @@ namespace HurryUpHaul.Api.Controllers
 
             var command = new CreateOrderCommand
             {
+                Username = User.Identity.Name,
                 OrderDetails = request.Details
             };
 

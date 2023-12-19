@@ -2,6 +2,6 @@ namespace HurryUpHaul.Contracts.Http
 {
     public class ErrorResponse
     {
-        public string[] Errors { get; init; }
+        public IEnumerable<string> Errors { get; init; }
     }
 }

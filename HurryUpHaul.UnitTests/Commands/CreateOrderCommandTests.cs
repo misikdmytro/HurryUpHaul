@@ -48,6 +48,7 @@ namespace HurryUpHaul.UnitTests.Commands
             // Arrange
             var command = new CreateOrderCommand
             {
+                Username = _faker.Person.UserName,
                 OrderDetails = _faker.Lorem.Sentence()
             };
 
@@ -68,6 +69,7 @@ namespace HurryUpHaul.UnitTests.Commands
             order.Should().NotBeNull();
             order.Details.Should().Be(command.OrderDetails);
             order.Status.Should().Be(OrderStatus.Created);
+            order.CreatedBy.Should().Be(command.Username);
             order.CreatedAt.Should().Be(now);
             order.LastUpdatedAt.Should().Be(now);
             order.Events.Should().HaveCount(1);

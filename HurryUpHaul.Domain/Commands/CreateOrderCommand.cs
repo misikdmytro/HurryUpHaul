@@ -13,6 +13,7 @@ namespace HurryUpHaul.Domain.Commands
 {
     public class CreateOrderCommand : IRequest<CreateOrderCommandResult>
     {
+        public string Username { get; init; }
         public string OrderDetails { get; init; }
     }
 
@@ -45,6 +46,7 @@ namespace HurryUpHaul.Domain.Commands
                 Details = request.OrderDetails,
                 Status = OrderStatus.Created,
                 CreatedAt = now,
+                CreatedBy = request.Username,
                 LastUpdatedAt = now,
                 Events = [
                     new OrderEvent

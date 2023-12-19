@@ -1,9 +1,12 @@
 using System.Reflection;
+using System.Security.Claims;
+using System.Text;
 
 using HurryUpHaul.Api;
 using HurryUpHaul.Api.Filters;
 using HurryUpHaul.Domain;
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -15,30 +18,77 @@ builder.Services.AddControllers(options =>
     options.Filters.Add<AppExceptionFilter>();
 });
 
-builder.Services
-    .AddEndpointsApiExplorer()
-    .AddSwaggerGen(options =>
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
     {
-        options.SwaggerDoc("v1", new OpenApiInfo
-        {
-            Version = "v1",
-            Title = "Hurry Up, Haul! API",
-            Description = "Hurry Up, Haul! API",
-        });
+        Version = "v1",
+        Title = "Hurry Up, Haul! API",
+        Description = "Hurry Up, Haul! API",
+    });
 
-        // using System.Reflection;
-        var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-        options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
-    })
-    .AddDomainServices(builder.Configuration.GetConnectionString("AppDbConnection"))
-    .AddApiServices()
-    .AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options =>
+    // using System.Reflection;
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        options.Authority = "https://localhost:5001";
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            []
+        }
+    });
+});
+
+builder.Services.AddDomainServices(
+    builder.Configuration.GetConnectionString("AppDbConnection"),
+    builder.Configuration.GetSection("Jwt")
+);
+builder.Services.AddApiServices();
+
+builder.Services
+    .AddAuthorizationBuilder()
+    .AddPolicy("Customer", policy => policy.RequireClaim(ClaimTypes.Role, "customer"));
+
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        var jwtConfig = builder.Configuration.GetSection("Jwt");
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateAudience = false
+            ValidateAudience = true,
+            ValidateIssuer = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtConfig["Issuer"],
+            ValidAudience = jwtConfig["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig["Secret"])),
+            RoleClaimType = "role",
+            NameClaimType = "name"
         };
     });
 
