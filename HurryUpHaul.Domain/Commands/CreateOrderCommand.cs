@@ -22,7 +22,7 @@ namespace HurryUpHaul.Domain.Commands
         public string OrderId { get; init; }
     }
 
-    internal class CreateOrderCommandHandler : BaseHandler<CreateOrderCommand, CreateOrderCommandResult>
+    internal class CreateOrderCommandHandler : BaseRequestHandler<CreateOrderCommand, CreateOrderCommandResult>
     {
         private readonly AppDbContext _dbContext;
         private readonly IDateTimeProvider _dateTimeProvider;

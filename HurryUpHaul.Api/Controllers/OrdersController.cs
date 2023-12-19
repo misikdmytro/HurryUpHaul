@@ -4,6 +4,7 @@ using FluentValidation;
 
 using HurryUpHaul.Contracts.Http;
 using HurryUpHaul.Domain.Commands;
+using HurryUpHaul.Domain.Queries;
 
 using MediatR;
 
@@ -19,12 +20,12 @@ namespace HurryUpHaul.Api.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly IMediator _mediator;
-        private readonly IValidator<CreateOrderRequest> _validator;
+        private readonly IValidator<CreateOrderRequest> _createOrderValidator;
 
-        public OrdersController(IMediator mediator, IValidator<CreateOrderRequest> validator)
+        public OrdersController(IMediator mediator, IValidator<CreateOrderRequest> createOrderValidator)
         {
             _mediator = mediator;
-            _validator = validator;
+            _createOrderValidator = createOrderValidator;
         }
 
         /// <summary>
@@ -48,15 +49,15 @@ namespace HurryUpHaul.Api.Controllers
         /// <response code="403">Forbidden</response>
         /// <response code="500">Internal server error</response>
         [HttpPost]
+        [Authorize(Policy = "Customer")]
         [ProducesResponseType(typeof(CreateOrderResponse), 201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(500)]
-        [Authorize(Policy = "Customer")]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request, CancellationToken cancellationToken = default)
         {
-            var validationResult = await _validator.ValidateAsync(request, cancellationToken);
+            var validationResult = await _createOrderValidator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return BadRequest(new ErrorResponse
@@ -77,6 +78,51 @@ namespace HurryUpHaul.Api.Controllers
             {
                 Id = result.OrderId
             });
+        }
+
+        /// <summary>
+        /// Gets an order by ID
+        /// </summary>
+        /// <param name="id">Order ID</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Order</returns>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///   GET /api/orders/12345678-1234-1234-1234-123456789012
+        /// 
+        /// </remarks>
+        /// <response code="200">Order found</response>
+        /// <response code="401">Unauthorized</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Order not found</response>
+        /// <response code="500">Internal server error</response>
+        [HttpGet("{id}")]
+        [Authorize(Policy = "Customer")]
+        [ProducesResponseType(typeof(GetOrderResponse), 200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> GetOrderById([FromRoute] Guid id, CancellationToken cancellationToken = default)
+        {
+            var query = new GetOrderByIdQuery
+            {
+                Id = id,
+                Username = User.Identity.Name
+            };
+
+            var result = await _mediator.Send(query, cancellationToken);
+
+            return result.Order == null
+                ? NotFound(new ErrorResponse
+                {
+                    Errors = new[] { $"Order with ID '{id}' not found." }
+                })
+                : Ok(new GetOrderResponse
+                {
+                    Order = result.Order
+                });
         }
     }
 }

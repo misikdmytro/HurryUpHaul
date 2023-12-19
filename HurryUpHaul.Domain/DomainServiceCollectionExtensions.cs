@@ -2,6 +2,7 @@ using HurryUpHaul.Domain.Commands;
 using HurryUpHaul.Domain.Configuration;
 using HurryUpHaul.Domain.Databases;
 using HurryUpHaul.Domain.Helpers;
+using HurryUpHaul.Domain.Profiles;
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,7 @@ namespace HurryUpHaul.Domain
                 .Configure<JwtSettings>(jwt)
                 .AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CreateOrderCommand>())
                 .AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString))
+                .AddAutoMapper(cfg => cfg.AddProfile<AppProfile>())
                 .AddSingleton<IDateTimeProvider, DateTimeProvider>();
         }
     }

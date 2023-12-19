@@ -20,7 +20,7 @@ namespace HurryUpHaul.Domain.Commands
         public IEnumerable<IdentityError> Errors { get; init; }
     }
 
-    internal class RegisterUserCommandHandler : BaseHandler<RegisterUserCommand, RegisterUserCommandResult>
+    internal class RegisterUserCommandHandler : BaseRequestHandler<RegisterUserCommand, RegisterUserCommandResult>
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;

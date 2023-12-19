@@ -5,12 +5,12 @@ using Microsoft.Extensions.Logging;
 
 namespace HurryUpHaul.Domain.Handlers
 {
-    internal abstract class BaseHandler<TRequest, TResponse> : IRequestHandler<TRequest, TResponse>
+    internal abstract class BaseRequestHandler<TRequest, TResponse> : IRequestHandler<TRequest, TResponse>
         where TRequest : IRequest<TResponse>
     {
         protected readonly ILogger Logger;
 
-        protected BaseHandler(ILogger logger)
+        protected BaseRequestHandler(ILogger logger)
         {
             Logger = logger;
         }

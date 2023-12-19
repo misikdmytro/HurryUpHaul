@@ -29,7 +29,7 @@ namespace HurryUpHaul.Domain.Commands
         public IEnumerable<string> Errors { get; init; }
     }
 
-    internal class AuthenticateUserCommandHandler : BaseHandler<AuthenticateUserCommand, AuthenticateUserCommandResult>
+    internal class AuthenticateUserCommandHandler : BaseRequestHandler<AuthenticateUserCommand, AuthenticateUserCommandResult>
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IOptionsMonitor<JwtSettings> _jwtOptions;
