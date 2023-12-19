@@ -28,6 +28,6 @@ jobs:
       - name: Tools Restore
         run: dotnet tool restore
       - name: EF Core Migrations
-        run: dotnet ef database update -s ./HurryUpHaul.Api/
+        run: dotnet ef database update -s ./HurryUpHaul.Api/ --no-build
       - name: Test
         run: dotnet test --no-restore --verbosity normal
