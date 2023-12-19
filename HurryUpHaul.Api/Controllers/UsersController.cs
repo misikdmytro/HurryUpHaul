@@ -175,7 +175,7 @@ namespace HurryUpHaul.Api.Controllers
         ///  PUT /api/users/admin
         ///  {
         ///     username: "TestUser",
-        ///     role: "merchant"
+        ///     role: "admin"
         ///  }
         /// 
         /// </remarks>

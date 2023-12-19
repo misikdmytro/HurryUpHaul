@@ -1,9 +1,7 @@
-using HurryUpHaul.Domain.Constants;
 using HurryUpHaul.Domain.Databases;
 using HurryUpHaul.Domain.Handlers;
 using HurryUpHaul.Domain.Helpers;
 using HurryUpHaul.Domain.Models.Database;
-using HurryUpHaul.Domain.Models.Events;
 
 using MediatR;
 
@@ -13,13 +11,15 @@ namespace HurryUpHaul.Domain.Commands
 {
     public class CreateOrderCommand : IRequest<CreateOrderCommandResult>
     {
-        public string Username { get; init; }
-        public string OrderDetails { get; init; }
+        public required Guid RestaurantId { get; init; }
+        public required string Customer { get; init; }
+        public required string OrderDetails { get; init; }
     }
 
     public class CreateOrderCommandResult
     {
-        public string OrderId { get; init; }
+        public Guid OrderId { get; init; }
+        public string[] Errors { get; init; }
     }
 
     internal class CreateOrderCommandHandler : BaseRequestHandler<CreateOrderCommand, CreateOrderCommandResult>
@@ -46,20 +46,9 @@ namespace HurryUpHaul.Domain.Commands
                 Details = request.OrderDetails,
                 Status = OrderStatus.Created,
                 CreatedAt = now,
-                CreatedBy = request.Username,
+                CreatedBy = request.Customer,
                 LastUpdatedAt = now,
-                Events = [
-                    new OrderEvent
-                    {
-                        EventType = EventTypes.OrderCreated,
-                        OrderId = orderId,
-                        Payload = new OrderCreatedEvent
-                        {
-                            Details = request.OrderDetails
-                        },
-                        EventTime = _dateTimeProvider.Now
-                    }
-                ]
+                RestaurantId = request.RestaurantId
             };
 
             await _dbContext.Orders.AddAsync(order, cancellationToken);
@@ -67,8 +56,10 @@ namespace HurryUpHaul.Domain.Commands
 
             return new CreateOrderCommandResult
             {
-                OrderId = order.Id.ToString()
+                OrderId = orderId
             };
+
+            // ToDo: handle foreign key constraint exception
         }
     }
 }

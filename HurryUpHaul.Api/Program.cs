@@ -70,8 +70,7 @@ builder.Services.AddApiServices();
 builder.Services
     .AddAuthorizationBuilder()
     .AddPolicy(AuthorizePolicies.Customer, policy => policy.RequireClaim(ClaimTypes.Role, Roles.Customer))
-    .AddPolicy(AuthorizePolicies.Admin, policy => policy.RequireClaim(ClaimTypes.Role, Roles.Admin))
-    .AddPolicy(AuthorizePolicies.Merchant, policy => policy.RequireClaim(ClaimTypes.Role, Roles.Merchant));
+    .AddPolicy(AuthorizePolicies.Admin, policy => policy.RequireClaim(ClaimTypes.Role, Roles.Admin));
 
 builder.Services
     .AddAuthentication(options =>

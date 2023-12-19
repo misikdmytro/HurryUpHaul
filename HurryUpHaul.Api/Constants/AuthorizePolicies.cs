@@ -4,6 +4,5 @@ namespace HurryUpHaul.Api.Constants
     {
         public const string Customer = "Customer";
         public const string Admin = "Admin";
-        public const string Merchant = "Merchant";
     }
 }

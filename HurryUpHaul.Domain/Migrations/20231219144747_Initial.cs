@@ -52,19 +52,16 @@ namespace HurryUpHaul.Domain.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "orders",
+                name: "Restaurants",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    details = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
-                    status = table.Column<int>(type: "integer", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    created_by = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    last_updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_orders", x => x.id);
+                    table.PrimaryKey("PK_Restaurants", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -174,24 +171,49 @@ namespace HurryUpHaul.Domain.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "order_events",
+                name: "IdentityUserRestaurant",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    order_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    event_type = table.Column<string>(type: "text", nullable: true),
-                    event_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    payload = table.Column<string>(type: "jsonb", nullable: true)
+                    ManagersId = table.Column<string>(type: "text", nullable: false),
+                    RestaurantId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_order_events", x => x.id);
+                    table.PrimaryKey("PK_IdentityUserRestaurant", x => new { x.ManagersId, x.RestaurantId });
                     table.ForeignKey(
-                        name: "FK_order_events_orders_order_id",
-                        column: x => x.order_id,
-                        principalTable: "orders",
-                        principalColumn: "id",
+                        name: "FK_IdentityUserRestaurant_AspNetUsers_ManagersId",
+                        column: x => x.ManagersId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_IdentityUserRestaurant_Restaurants_RestaurantId",
+                        column: x => x.RestaurantId,
+                        principalTable: "Restaurants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Orders",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Details = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    RestaurantId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Orders", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Orders_Restaurants_RestaurantId",
+                        column: x => x.RestaurantId,
+                        principalTable: "Restaurants",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -233,14 +255,19 @@ namespace HurryUpHaul.Domain.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_order_events_order_id",
-                table: "order_events",
-                column: "order_id");
+                name: "IX_IdentityUserRestaurant_RestaurantId",
+                table: "IdentityUserRestaurant",
+                column: "RestaurantId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_orders_created_by",
-                table: "orders",
-                column: "created_by");
+                name: "IX_Orders_CreatedBy",
+                table: "Orders",
+                column: "CreatedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Orders_RestaurantId",
+                table: "Orders",
+                column: "RestaurantId");
         }
 
         /// <inheritdoc />
@@ -262,7 +289,10 @@ namespace HurryUpHaul.Domain.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "order_events");
+                name: "IdentityUserRestaurant");
+
+            migrationBuilder.DropTable(
+                name: "Orders");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
@@ -271,7 +301,7 @@ namespace HurryUpHaul.Domain.Migrations
                 name: "AspNetUsers");
 
             migrationBuilder.DropTable(
-                name: "orders");
+                name: "Restaurants");
         }
     }
 }

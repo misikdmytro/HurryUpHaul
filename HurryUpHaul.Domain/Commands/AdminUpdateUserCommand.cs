@@ -9,7 +9,7 @@ namespace HurryUpHaul.Domain.Commands
 {
     public class AdminUpdateUserCommand : IRequest<AdminUpdateUserCommandResult>
     {
-        public string Username { get; init; }
+        public required string Username { get; init; }
         public string[] RoleToAdd { get; init; } = [];
         public string[] RoleToRemove { get; init; } = [];
     }

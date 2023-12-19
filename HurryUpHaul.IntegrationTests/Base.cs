@@ -12,7 +12,7 @@ using Newtonsoft.Json;
 
 namespace HurryUpHaul.IntegrationTests
 {
-    public class UserInfo
+    internal class UserInfo
     {
         public string Username { get; init; }
         public string Password { get; init; }
@@ -48,7 +48,7 @@ namespace HurryUpHaul.IntegrationTests
             }
         }
 
-        protected async Task<UserInfo> CreateTestUser(string role = "customer")
+        private protected async Task<UserInfo> CreateTestUser(string role = "customer")
         {
             // 1. registration
             var client = _factory.CreateClient();

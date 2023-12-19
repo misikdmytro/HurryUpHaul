@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HurryUpHaul.Domain.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20231219104446_Initial")]
+    [Migration("20231219144747_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -29,70 +29,71 @@ namespace HurryUpHaul.Domain.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("created_by");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("Details")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("details");
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<DateTime>("LastUpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_at");
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RestaurantId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer")
-                        .HasColumnName("status");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedBy");
 
-                    b.ToTable("orders");
+                    b.HasIndex("RestaurantId");
+
+                    b.ToTable("Orders");
                 });
 
-            modelBuilder.Entity("HurryUpHaul.Domain.Models.Database.OrderEvent", b =>
+            modelBuilder.Entity("HurryUpHaul.Domain.Models.Database.Restaurant", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+                        .HasColumnType("uuid");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("EventTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("event_time");
-
-                    b.Property<string>("EventType")
-                        .HasColumnType("text")
-                        .HasColumnName("event_type");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("order_id");
-
-                    b.Property<string>("Payload")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("payload");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderId");
+                    b.ToTable("Restaurants");
+                });
 
-                    b.ToTable("order_events");
+            modelBuilder.Entity("IdentityUserRestaurant", b =>
+                {
+                    b.Property<string>("ManagersId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("RestaurantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ManagersId", "RestaurantId");
+
+                    b.HasIndex("RestaurantId");
+
+                    b.ToTable("IdentityUserRestaurant");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -291,15 +292,30 @@ namespace HurryUpHaul.Domain.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("HurryUpHaul.Domain.Models.Database.OrderEvent", b =>
+            modelBuilder.Entity("HurryUpHaul.Domain.Models.Database.Order", b =>
                 {
-                    b.HasOne("HurryUpHaul.Domain.Models.Database.Order", "Order")
-                        .WithMany("Events")
-                        .HasForeignKey("OrderId")
+                    b.HasOne("HurryUpHaul.Domain.Models.Database.Restaurant", "Restaurant")
+                        .WithMany("Orders")
+                        .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Order");
+                    b.Navigation("Restaurant");
+                });
+
+            modelBuilder.Entity("IdentityUserRestaurant", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("ManagersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HurryUpHaul.Domain.Models.Database.Restaurant", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -353,9 +369,9 @@ namespace HurryUpHaul.Domain.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("HurryUpHaul.Domain.Models.Database.Order", b =>
+            modelBuilder.Entity("HurryUpHaul.Domain.Models.Database.Restaurant", b =>
                 {
-                    b.Navigation("Events");
+                    b.Navigation("Orders");
                 });
 #pragma warning restore 612, 618
         }

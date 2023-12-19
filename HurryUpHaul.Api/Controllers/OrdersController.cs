@@ -69,7 +69,8 @@ namespace HurryUpHaul.Api.Controllers
 
             var command = new CreateOrderCommand
             {
-                Username = User.Identity.Name,
+                RestaurantId = request.RestaurantId,
+                Customer = User.Identity.Name,
                 OrderDetails = request.Details
             };
 

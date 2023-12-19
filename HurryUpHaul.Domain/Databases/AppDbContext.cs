@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 using HurryUpHaul.Domain.Models.Database;
 
 using Microsoft.AspNetCore.Identity;
@@ -11,7 +9,7 @@ namespace HurryUpHaul.Domain.Databases
     internal class AppDbContext : IdentityDbContext<IdentityUser>
     {
         public DbSet<Order> Orders { get; init; }
-        public DbSet<OrderEvent> OrderEvents { get; init; }
+        public DbSet<Restaurant> Restaurants { get; init; }
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -21,13 +19,9 @@ namespace HurryUpHaul.Domain.Databases
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder
-                .Entity<OrderEvent>()
-                .Property(e => e.Payload)
-                .HasConversion(
-                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                    v => JsonSerializer.Deserialize<object>(v, (JsonSerializerOptions)null)
-                );
+            modelBuilder.Entity<Restaurant>()
+                .HasMany(r => r.Managers)
+                .WithMany();
         }
     }
 }

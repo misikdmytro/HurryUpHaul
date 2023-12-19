@@ -164,30 +164,25 @@ namespace HurryUpHaul.IntegrationTests
         public static IEnumerable<object[]> AdminUpdateUserDataSuccess => new object[][]
         {
             [
-                new string[] { "merchant" },
+                new string[] { "admin" },
                 new string[] { "customer" },
-                new string[] { "merchant" }
+                new string[] { "admin" }
             ],
             [
-                new string[] { "merchant" },
+                new string[] { "admin" },
                 Array.Empty<string>(),
-                new string[] { "customer", "merchant" }
+                new string[] { "customer", "admin" }
             ],
             [
                 Array.Empty<string>(),
                 new string[] { "customer" },
                 Array.Empty<string>()
-            ],
-            [
-                new string[] { "admin", "merchant" },
-                Array.Empty<string>(),
-                new string[] { "customer", "admin", "merchant" }
             ]
         };
 
         [Theory]
         [MemberData(nameof(AdminUpdateUserDataSuccess))]
-        public async Task AdminUpdateUserShouldUpdateUserToMerchant(string[] rolesToAdd, string[] rolesToRemove, string[] expectedRoles)
+        public async Task AdminUpdateUserShouldUpdateUser(string[] rolesToAdd, string[] rolesToRemove, string[] expectedRoles)
         {
             var client = _factory.CreateClient();
 
@@ -197,7 +192,7 @@ namespace HurryUpHaul.IntegrationTests
             // 2. create admin user
             var admin = await CreateTestUser("admin");
 
-            // 3. add role 'merchant' and remove role 'customer'
+            // 3. update user
             var adminUpdateRequest = new AdminUpdateUserRequest
             {
                 Username = user.Username,
