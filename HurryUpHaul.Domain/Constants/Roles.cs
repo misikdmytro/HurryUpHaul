@@ -1,7 +1,9 @@
 namespace HurryUpHaul.Domain.Constants
 {
-    internal static class Roles
+    public static class Roles
     {
         public const string Customer = "customer";
+        public const string Merchant = "merchant";
+        public const string Admin = "admin";
     }
 }

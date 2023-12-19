@@ -2,6 +2,7 @@ using System.Net.Mime;
 
 using FluentValidation;
 
+using HurryUpHaul.Api.Constants;
 using HurryUpHaul.Contracts.Http;
 using HurryUpHaul.Domain.Commands;
 using HurryUpHaul.Domain.Queries;
@@ -98,7 +99,7 @@ namespace HurryUpHaul.Api.Controllers
         /// <response code="404">Order not found</response>
         /// <response code="500">Internal server error</response>
         [HttpGet("{id}")]
-        [Authorize(Policy = "Customer")]
+        [Authorize(Policy = AuthorizePolicies.Customer)]
         [ProducesResponseType(typeof(GetOrderResponse), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]

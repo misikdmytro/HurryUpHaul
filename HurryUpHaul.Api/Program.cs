@@ -1,10 +1,13 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 
 using HurryUpHaul.Api;
+using HurryUpHaul.Api.Constants;
 using HurryUpHaul.Api.Filters;
 using HurryUpHaul.Domain;
+using HurryUpHaul.Domain.Constants;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -66,7 +69,9 @@ builder.Services.AddApiServices();
 
 builder.Services
     .AddAuthorizationBuilder()
-    .AddPolicy("Customer", policy => policy.RequireClaim(ClaimTypes.Role, "customer"));
+    .AddPolicy(AuthorizePolicies.Customer, policy => policy.RequireClaim(ClaimTypes.Role, Roles.Customer))
+    .AddPolicy(AuthorizePolicies.Admin, policy => policy.RequireClaim(ClaimTypes.Role, Roles.Admin))
+    .AddPolicy(AuthorizePolicies.Merchant, policy => policy.RequireClaim(ClaimTypes.Role, Roles.Merchant));
 
 builder.Services
     .AddAuthentication(options =>
@@ -87,8 +92,8 @@ builder.Services
             ValidIssuer = jwtConfig["Issuer"],
             ValidAudience = jwtConfig["Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig["Secret"])),
-            RoleClaimType = "role",
-            NameClaimType = "name"
+            RoleClaimType = ClaimNames.Role,
+            NameClaimType = JwtRegisteredClaimNames.Name
         };
     });
 

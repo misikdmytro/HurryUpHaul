@@ -5,6 +5,7 @@ using System.Text;
 using FluentAssertions;
 
 using HurryUpHaul.Contracts.Http;
+using HurryUpHaul.Contracts.Models;
 
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -18,20 +19,28 @@ namespace HurryUpHaul.IntegrationTests
         {
         }
 
-        [Fact]
-        public async Task CreateAndGetOrderShouldDoIt()
+        [Theory]
+        [InlineData("details")]
+        [InlineData("détails")]
+        [InlineData("细节")]
+        [InlineData("details!@#$%^&*()_+")]
+        [InlineData("1234567890")]
+        [InlineData("details with spaces")]
+        [InlineData("details with punctuation.")]
+        [InlineData("details with emoji 🤓")]
+        public async Task CreateAndGetOrderShouldDoIt(string details)
         {
             // 1. create order
-            var token = await CreateTestUser();
+            var user = await CreateTestUser();
 
             var client = _factory.CreateClient();
             var createOrderRequest = new CreateOrderRequest
             {
-                Details = _faker.Lorem.Sentence()
+                Details = details
             };
             using var createOrderHttpRequest = new HttpRequestMessage(HttpMethod.Post, "api/orders");
             createOrderHttpRequest.Content = new StringContent(JsonConvert.SerializeObject(createOrderRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
-            createOrderHttpRequest.Headers.Add("Authorization", $"Bearer {token}");
+            createOrderHttpRequest.Headers.Add("Authorization", $"Bearer {user.Token}");
 
             using var createOrderResponse = await client.SendAsync(createOrderHttpRequest);
 
@@ -45,7 +54,7 @@ namespace HurryUpHaul.IntegrationTests
 
             // 2. get order
             using var getOrderHttpRequest = new HttpRequestMessage(HttpMethod.Get, createOrderResponse.Headers.Location);
-            getOrderHttpRequest.Headers.Add("Authorization", $"Bearer {token}");
+            getOrderHttpRequest.Headers.Add("Authorization", $"Bearer {user.Token}");
 
             using var getOrderResponse = await client.SendAsync(getOrderHttpRequest);
 
@@ -60,14 +69,14 @@ namespace HurryUpHaul.IntegrationTests
             getOrderResponseContent.Order.CreatedBy.Should().NotBeNullOrEmpty();
             getOrderResponseContent.Order.CreatedAt.Should().NotBe(default);
             getOrderResponseContent.Order.LastUpdatedAt.Should().NotBe(default);
-            getOrderResponseContent.Order.Status.Should().Be("Created");
+            getOrderResponseContent.Order.Status.Should().Be(OrderStatus.Created);
         }
 
         [Fact]
-        public async Task GetOrderShouldFaileForNonCreator()
+        public async Task GetOrderShouldFailForNonCreator()
         {
             // 1. create order
-            var token1 = await CreateTestUser();
+            var user1 = await CreateTestUser();
 
             var client = _factory.CreateClient();
             var createOrderRequest = new CreateOrderRequest
@@ -76,7 +85,7 @@ namespace HurryUpHaul.IntegrationTests
             };
             using var createOrderHttpRequest = new HttpRequestMessage(HttpMethod.Post, "api/orders");
             createOrderHttpRequest.Content = new StringContent(JsonConvert.SerializeObject(createOrderRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
-            createOrderHttpRequest.Headers.Add("Authorization", $"Bearer {token1}");
+            createOrderHttpRequest.Headers.Add("Authorization", $"Bearer {user1.Token}");
 
             using var createOrderResponse = await client.SendAsync(createOrderHttpRequest);
 
@@ -89,10 +98,10 @@ namespace HurryUpHaul.IntegrationTests
             responseContent.Id.Should().NotBeNullOrEmpty();
 
             // 2. get order
-            var token2 = await CreateTestUser();
+            var user2 = await CreateTestUser();
 
             using var getOrderHttpRequest = new HttpRequestMessage(HttpMethod.Get, createOrderResponse.Headers.Location);
-            getOrderHttpRequest.Headers.Add("Authorization", $"Bearer {token2}");
+            getOrderHttpRequest.Headers.Add("Authorization", $"Bearer {user2.Token}");
 
             using var getOrderResponse = await client.SendAsync(getOrderHttpRequest);
 
@@ -106,17 +115,16 @@ namespace HurryUpHaul.IntegrationTests
             getOrderResponseContent.Errors.First().Should().Be($"Order with ID '{responseContent.Id}' not found.");
         }
 
-
         [Fact]
-        public async Task GetOrderShouldReturnNotFound()
+        public async Task GetOrderShouldReturnNotFoundWhenOrderDoesNotExist()
         {
             // Arrange
-            var token = await CreateTestUser();
+            var user = await CreateTestUser();
 
             var client = _factory.CreateClient();
             var id = Guid.NewGuid();
             using var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"api/orders/{id}");
-            httpRequest.Headers.Add("Authorization", $"Bearer {token}");
+            httpRequest.Headers.Add("Authorization", $"Bearer {user.Token}");
 
             // Act
             using var response = await client.SendAsync(httpRequest);
@@ -138,7 +146,7 @@ namespace HurryUpHaul.IntegrationTests
         public async Task CreateOrderShouldReturnBadRequestWhenDetailsIsNullOrEmpty(string details)
         {
             // Arrange
-            var token = await CreateTestUser();
+            var user = await CreateTestUser();
 
             var client = _factory.CreateClient();
             var request = new CreateOrderRequest
@@ -147,7 +155,7 @@ namespace HurryUpHaul.IntegrationTests
             };
             using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/orders");
             httpRequest.Content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
-            httpRequest.Headers.Add("Authorization", $"Bearer {token}");
+            httpRequest.Headers.Add("Authorization", $"Bearer {user.Token}");
 
             // Act
             using var response = await client.SendAsync(httpRequest);

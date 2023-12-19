@@ -64,7 +64,7 @@ namespace HurryUpHaul.IntegrationTests
 
             meResponseContent.Should().NotBeNull();
             meResponseContent.Username.Should().Be(registerRequest.Username);
-            meResponseContent.Role.Should().Be("customer");
+            meResponseContent.Roles.Should().BeEquivalentTo(["customer"]);
         }
 
         [Theory]
@@ -159,6 +159,97 @@ namespace HurryUpHaul.IntegrationTests
             authenticateResponseContent.Should().NotBeNull();
             authenticateResponseContent.Errors.Should().HaveCount(1);
             authenticateResponseContent.Errors.First().Should().Be("Invalid username or password.");
+        }
+
+        public static IEnumerable<object[]> AdminUpdateUserDataSuccess => new object[][]
+        {
+            [
+                new string[] { "merchant" },
+                new string[] { "customer" },
+                new string[] { "merchant" }
+            ],
+            [
+                new string[] { "merchant" },
+                Array.Empty<string>(),
+                new string[] { "customer", "merchant" }
+            ],
+            [
+                Array.Empty<string>(),
+                new string[] { "customer" },
+                Array.Empty<string>()
+            ],
+            [
+                new string[] { "admin", "merchant" },
+                Array.Empty<string>(),
+                new string[] { "customer", "admin", "merchant" }
+            ]
+        };
+
+        [Theory]
+        [MemberData(nameof(AdminUpdateUserDataSuccess))]
+        public async Task AdminUpdateUserShouldUpdateUserToMerchant(string[] rolesToAdd, string[] rolesToRemove, string[] expectedRoles)
+        {
+            var client = _factory.CreateClient();
+
+            // 1. create customer
+            var user = await CreateTestUser();
+
+            // 2. create admin user
+            var admin = await CreateTestUser("admin");
+
+            // 3. add role 'merchant' and remove role 'customer'
+            var adminUpdateRequest = new AdminUpdateUserRequest
+            {
+                Username = user.Username,
+                Roles = rolesToAdd
+                    .Select(x => new UpdateRole
+                    {
+                        Role = x,
+                        Action = UpdateRoleAction.Add
+                    })
+                    .Concat(rolesToRemove.Select(x => new UpdateRole
+                    {
+                        Role = x,
+                        Action = UpdateRoleAction.Remove
+                    }))
+                    .ToArray()
+            };
+
+            using var adminUpdateHttpRequest = new HttpRequestMessage(HttpMethod.Put, "api/users/admin");
+            adminUpdateHttpRequest.Content = new StringContent(JsonConvert.SerializeObject(adminUpdateRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
+            adminUpdateHttpRequest.Headers.Add("Authorization", $"Bearer {admin.Token}");
+
+            using var adminUpdateResponse = await client.SendAsync(adminUpdateHttpRequest);
+
+            adminUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            // 4. authenticate again as user
+            var authenticateRequest = new AuthenticateUserRequest
+            {
+                Username = user.Username,
+                Password = user.Password
+            };
+
+            using var authenticateContent = new StringContent(JsonConvert.SerializeObject(authenticateRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
+
+            using var authenticateResponse = await client.PostAsync("api/users/token", authenticateContent);
+
+            authenticateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var authenticateResponseContent = await authenticateResponse.Content.ReadFromJsonAsync<AuthenticateUserResponse>();
+
+            // 5. 'me' as user
+            using var meHttpRequest = new HttpRequestMessage(HttpMethod.Get, "api/users/me");
+            meHttpRequest.Headers.Add("Authorization", $"Bearer {authenticateResponseContent.Token}");
+
+            using var meResponse = await client.SendAsync(meHttpRequest);
+
+            meResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var meResponseContent = await meResponse.Content.ReadFromJsonAsync<MeResponse>();
+
+            meResponseContent.Should().NotBeNull();
+            meResponseContent.Roles.Should().BeEquivalentTo(expectedRoles);
         }
     }
 }

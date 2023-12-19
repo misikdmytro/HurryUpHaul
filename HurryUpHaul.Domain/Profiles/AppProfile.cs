@@ -8,8 +8,7 @@ namespace HurryUpHaul.Domain.Profiles
     {
         public AppProfile()
         {
-            CreateMap<Order, Contracts.Models.Order>()
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString("G")));
+            CreateMap<Order, Contracts.Models.Order>();
         }
     }
 }
