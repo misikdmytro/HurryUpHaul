@@ -17,8 +17,4 @@ namespace HurryUpHaul.Contracts.Http
         public string Username { get; init; }
         public UpdateRole[] Roles { get; init; }
     }
-
-    public class AdminUpdateUserResponse
-    {
-    }
 }

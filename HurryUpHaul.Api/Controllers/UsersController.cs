@@ -41,7 +41,7 @@ namespace HurryUpHaul.Api.Controllers
         /// </summary>
         /// <param name="request">Register user request</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>Succeeded</returns>
+        /// <returns>OK</returns>
         /// <remarks>
         /// Sample request:
         /// 
@@ -56,7 +56,6 @@ namespace HurryUpHaul.Api.Controllers
         /// <response code="400">Invalid request</response>
         /// <response code="500">Internal server error</response>
         [HttpPost]
-        [ProducesResponseType(typeof(RegisterUserResponse), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserRequest request, CancellationToken cancellationToken = default)
@@ -82,7 +81,7 @@ namespace HurryUpHaul.Api.Controllers
                 {
                     Errors = result.Errors.Select(x => x.Description).ToArray()
                 })
-                : Ok(new RegisterUserResponse());
+                : Ok();
         }
 
         /// <summary>
@@ -169,7 +168,7 @@ namespace HurryUpHaul.Api.Controllers
         /// </summary>
         /// <param name="request">Update user request</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>Succeeded</returns>
+        /// <returns>OK</returns>
         /// <remarks>
         /// Sample request:
         /// 
@@ -187,7 +186,6 @@ namespace HurryUpHaul.Api.Controllers
         /// <response code="500">Internal server error</response>
         [HttpPut("admin")]
         [Authorize(Policy = AuthorizePolicies.Admin)]
-        [ProducesResponseType(typeof(AdminUpdateUserResponse), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(500)]
@@ -215,7 +213,7 @@ namespace HurryUpHaul.Api.Controllers
                 {
                     Errors = result.Errors
                 })
-                : Ok(new AdminUpdateUserResponse());
+                : Ok();
         }
     }
 }
