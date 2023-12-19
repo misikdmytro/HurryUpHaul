@@ -14,6 +14,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+using OpenTelemetry.Metrics;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers(options =>
@@ -96,6 +98,16 @@ builder.Services
         };
     });
 
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(builder =>
+    {
+        builder.AddPrometheusExporter();
+        builder.AddMeter("Microsoft.AspNetCore.Hosting", "Microsoft.AspNetCore.Server.Kestrel");
+    });
+
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("AppDbConnection"));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -109,6 +121,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapPrometheusScrapingEndpoint();
+app.MapHealthChecks("/health");
 
 await app.RunAsync();
 
