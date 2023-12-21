@@ -1,0 +1,16 @@
+{
+    "recommendations": [
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "k--kato.docomment",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg",
+        "github.vscode-github-actions",
+        "ms-azuretools.vscode-docker",
+        "EditorConfig.EditorConfig",
+        "yzhang.markdown-all-in-one",
+        "ms-vscode-remote.remote-containers"
+    ],
+    "unwantedRecommendations": []
+}
