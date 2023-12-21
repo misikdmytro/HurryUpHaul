@@ -35,6 +35,7 @@ namespace HurryUpHaul.IntegrationTests
                 .AppendPathSegment("api")
                 .AppendPathSegment("users")
                 .AppendPathSegment("token")
+                .AllowHttpStatus(200)
                 .PostJsonAsync(request)
                 .ReceiveJson<AuthenticateUserResponse>();
         }
@@ -45,6 +46,7 @@ namespace HurryUpHaul.IntegrationTests
                 .Request()
                 .AppendPathSegment("api")
                 .AppendPathSegment("orders")
+                .AllowHttpStatus(201)
                 .PostJsonAsync(request)
                 .ReceiveJson<CreateOrderResponse>();
         }
@@ -56,6 +58,7 @@ namespace HurryUpHaul.IntegrationTests
                 .AppendPathSegment("api")
                 .AppendPathSegment("orders")
                 .WithOAuthBearerToken(token)
+                .AllowHttpStatus(201)
                 .PostJsonAsync(request)
                 .ReceiveJson<CreateOrderResponse>();
         }
@@ -67,6 +70,7 @@ namespace HurryUpHaul.IntegrationTests
                 .AppendPathSegment("api")
                 .AppendPathSegment("restaurants")
                 .WithOAuthBearerToken(token)
+                .AllowHttpStatus(201)
                 .PostJsonAsync(request)
                 .ReceiveJson<CreateRestaurantResponse>();
         }
@@ -78,6 +82,7 @@ namespace HurryUpHaul.IntegrationTests
                 .AppendPathSegment("api")
                 .AppendPathSegment("restaurants")
                 .AppendPathSegment(restaurantId)
+                .AllowHttpStatus(200)
                 .GetJsonAsync<GetRestaurantResponse>();
         }
 
@@ -89,6 +94,7 @@ namespace HurryUpHaul.IntegrationTests
                 .AppendPathSegment("restaurants")
                 .AppendPathSegment(restaurantId)
                 .WithOAuthBearerToken(token)
+                .AllowHttpStatus(200)
                 .GetJsonAsync<GetRestaurantResponse>();
         }
 
@@ -100,6 +106,7 @@ namespace HurryUpHaul.IntegrationTests
                 .AppendPathSegment("orders")
                 .AppendPathSegment(orderId)
                 .WithOAuthBearerToken(token)
+                .AllowHttpStatus(200)
                 .GetJsonAsync<GetOrderResponse>();
         }
 
@@ -111,6 +118,7 @@ namespace HurryUpHaul.IntegrationTests
                 .AppendPathSegment("users")
                 .AppendPathSegment("me")
                 .WithOAuthBearerToken(token)
+                .AllowHttpStatus(200)
                 .GetJsonAsync<MeResponse>();
         }
 
@@ -120,6 +128,7 @@ namespace HurryUpHaul.IntegrationTests
                 .Request()
                 .AppendPathSegment("api")
                 .AppendPathSegment("users")
+                .AllowHttpStatus(200)
                 .PostJsonAsync(request)
                 .ReceiveJson<RegisterUserResponse>();
         }
@@ -132,6 +141,7 @@ namespace HurryUpHaul.IntegrationTests
                 .AppendPathSegment("users")
                 .AppendPathSegment("admin")
                 .WithOAuthBearerToken(token)
+                .AllowHttpStatus(200)
                 .PutJsonAsync(request);
         }
 
