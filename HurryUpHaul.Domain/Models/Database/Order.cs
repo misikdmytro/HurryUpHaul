@@ -17,13 +17,13 @@ namespace HurryUpHaul.Domain.Models.Database
 
         public OrderStatus Status { get; set; }
 
-        public DateTime CreatedAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
 
         [Required]
         [MaxLength(256)]
         public string CreatedBy { get; set; }
 
-        public DateTime LastUpdatedAt { get; set; }
+        public DateTimeOffset LastUpdatedAt { get; set; }
 
         public virtual Restaurant Restaurant { get; set; }
 

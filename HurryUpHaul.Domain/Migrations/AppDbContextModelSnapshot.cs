@@ -27,7 +27,7 @@ namespace HurryUpHaul.Domain.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
@@ -40,7 +40,7 @@ namespace HurryUpHaul.Domain.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
-                    b.Property<DateTime>("LastUpdatedAt")
+                    b.Property<DateTimeOffset>("LastUpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("RestaurantId")
@@ -64,7 +64,7 @@ namespace HurryUpHaul.Domain.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")

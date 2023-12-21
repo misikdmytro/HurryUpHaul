@@ -111,7 +111,7 @@ namespace HurryUpHaul.Api.Controllers
         {
             var query = new GetRestaurantByIdQuery
             {
-                RequesterUsername = User?.Identity?.Name,
+                Requester = User?.Identity?.Name,
                 RequesterRoles = User?.Claims?.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToArray(),
                 RestaurantId = id
             };

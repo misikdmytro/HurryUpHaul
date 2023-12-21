@@ -5,7 +5,10 @@ using HurryUpHaul.Domain.Models.Database;
 
 using MediatR;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+
+using Npgsql;
 
 namespace HurryUpHaul.Domain.Commands
 {
@@ -37,28 +40,37 @@ namespace HurryUpHaul.Domain.Commands
 
         protected override async Task<CreateOrderCommandResult> HandleInternal(CreateOrderCommand request, CancellationToken cancellationToken)
         {
-            var now = _dateTimeProvider.Now;
-
-            var order = new Order
+            try
             {
-                Id = Guid.NewGuid().ToString(),
-                Details = request.OrderDetails,
-                Status = OrderStatus.Created,
-                CreatedAt = now,
-                CreatedBy = request.Customer,
-                LastUpdatedAt = now,
-                RestaurantId = request.RestaurantId
-            };
+                var now = _dateTimeProvider.Now;
 
-            await _dbContext.Orders.AddAsync(order, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+                var order = new Order
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Details = request.OrderDetails,
+                    Status = OrderStatus.Created,
+                    CreatedAt = now,
+                    CreatedBy = request.Customer,
+                    LastUpdatedAt = now,
+                    RestaurantId = request.RestaurantId
+                };
 
-            return new CreateOrderCommandResult
+                await _dbContext.Orders.AddAsync(order, cancellationToken);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                return new CreateOrderCommandResult
+                {
+                    OrderId = order.Id
+                };
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException sqlException && sqlException.SqlState == "23503")
             {
-                OrderId = order.Id
-            };
-
-            // ToDo: handle foreign key constraint exception
+                // 23503 = foreign_key_violation
+                return new CreateOrderCommandResult
+                {
+                    Errors = [$"Restaurant with ID '{request.RestaurantId}' not found."]
+                };
+            }
         }
     }
 }

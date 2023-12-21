@@ -14,7 +14,7 @@ namespace HurryUpHaul.Domain.Queries
 {
     public class GetRestaurantByIdQuery : IRequest<GetRestaurantByIdQueryResponse>
     {
-        public string RequesterUsername { get; init; }
+        public string Requester { get; init; }
         public string[] RequesterRoles { get; init; }
         public string RestaurantId { get; init; }
     }
@@ -48,7 +48,7 @@ namespace HurryUpHaul.Domain.Queries
                 return new GetRestaurantByIdQueryResponse();
             }
 
-            if (request.RequesterRoles?.Contains(Roles.Admin) != true && restaurant?.Managers.Any(m => m.UserName == request.RequesterUsername) != true)
+            if (request.RequesterRoles?.Contains(Roles.Admin) != true && restaurant?.Managers.Any(m => m.UserName == request.Requester) != true)
             {
                 // do not return all details if the user is not an admin or a manager of the restaurant
                 restaurant.Managers = null;

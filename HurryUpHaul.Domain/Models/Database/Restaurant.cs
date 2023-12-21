@@ -13,7 +13,7 @@ namespace HurryUpHaul.Domain.Models.Database
         [MaxLength(256)]
         public string Name { get; set; }
 
-        public DateTime CreatedAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
 
         public virtual ICollection<IdentityUser> Managers { get; set; }
 

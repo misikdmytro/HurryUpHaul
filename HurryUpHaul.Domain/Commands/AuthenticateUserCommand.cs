@@ -90,13 +90,13 @@ namespace HurryUpHaul.Domain.Commands
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.CurrentValue.Secret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var expires = DateTime.UtcNow.Add(_jwtOptions.CurrentValue.ExpiresIn);
+            var expires = DateTimeOffset.UtcNow.Add(_jwtOptions.CurrentValue.ExpiresIn);
 
             var token = new JwtSecurityToken(
                 issuer: _jwtOptions.CurrentValue.Issuer,
                 audience: _jwtOptions.CurrentValue.Audience,
                 claims: claims,
-                expires: expires,
+                expires: expires.UtcDateTime,
                 signingCredentials: creds
             );
 

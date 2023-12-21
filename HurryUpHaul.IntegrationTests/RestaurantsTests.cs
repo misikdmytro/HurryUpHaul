@@ -54,7 +54,7 @@ namespace HurryUpHaul.IntegrationTests
                 result.Restaurant.Id.Should().Be(expectedRestarauntId);
                 result.Restaurant.Name.Should().Be(restarauntName);
                 result.Restaurant.Managers.Should().BeEquivalentTo([admin.Username, owner.Username]);
-                result.Restaurant.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+                result.Restaurant.CreatedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
             }
 
             void AssertRestarauntAsGuest(GetRestaurantResponse result, string expectedRestarauntId)

@@ -58,8 +58,8 @@ namespace HurryUpHaul.IntegrationTests
             getResult.Order.Id.Should().Be(createResult.OrderId);
             getResult.Order.Details.Should().Be(details);
             getResult.Order.CreatedBy.Should().NotBeNullOrEmpty();
-            getResult.Order.CreatedAt.Should().NotBe(default);
-            getResult.Order.LastUpdatedAt.Should().NotBe(default);
+            getResult.Order.CreatedAt.Should().BeCloseTo(DateTimeOffset.Now, TimeSpan.FromSeconds(5));
+            getResult.Order.LastUpdatedAt.Should().BeCloseTo(DateTimeOffset.Now, TimeSpan.FromSeconds(5));
             getResult.Order.Status.Should().Be(OrderStatus.Created);
         }
 
@@ -101,6 +101,48 @@ namespace HurryUpHaul.IntegrationTests
                 responseContent.Should().NotBeNull();
                 responseContent.Errors.Should().HaveCount(1);
                 responseContent.Errors.First().Should().Be($"Order with ID '{creadeOrderResult.OrderId}' not found.");
+            }
+        }
+
+        [Fact]
+        public async Task GetOrderShouldReturnOrderForManagerAndAdmin()
+        {
+            // 1. create restaurant
+            var admin = await CreateTestUser("admin");
+            var owner = await CreateTestUser();
+
+            var restaurant = await _apiClient.CreateRestaurant(new CreateRestaurantRequest
+            {
+                Name = _faker.Company.CompanyName(),
+                ManagersIds = [owner.Id]
+            }, admin.Token);
+
+            // 2. create order
+            var user = await CreateTestUser();
+
+            var creadeOrderRequest = new CreateOrderRequest
+            {
+                RestaurantId = restaurant.RestaurantId,
+                Details = _faker.Lorem.Sentence()
+            };
+            var creadeOrderResult = await _apiClient.CreateOrder(creadeOrderRequest, user.Token);
+
+            // 3. get order as manager
+            AssertGetOrder(await _apiClient.GetOrder(creadeOrderResult.OrderId, owner.Token));
+
+            // 4. get order as admin
+            AssertGetOrder(await _apiClient.GetOrder(creadeOrderResult.OrderId, admin.Token));
+
+            void AssertGetOrder(GetOrderResponse result)
+            {
+                result.Should().NotBeNull();
+                result.Order.Should().NotBeNull();
+                result.Order.Id.Should().Be(creadeOrderResult.OrderId);
+                result.Order.Details.Should().Be(creadeOrderRequest.Details);
+                result.Order.CreatedBy.Should().Be(user.Username);
+                result.Order.CreatedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
+                result.Order.LastUpdatedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
+                result.Order.Status.Should().Be(OrderStatus.Created);
             }
         }
 
@@ -194,6 +236,34 @@ namespace HurryUpHaul.IntegrationTests
             catch (FlurlHttpException ex)
             {
                 ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.Unauthorized);
+            }
+        }
+
+        [Fact]
+        public async Task CreateShouldReturnBadRequestWhenRestaurantDoesNotExist()
+        {
+            var user = await CreateTestUser();
+            var restaurantId = Guid.NewGuid().ToString();
+
+            try
+            {
+                var createResult = await _apiClient.CreateOrder(new CreateOrderRequest
+                {
+                    RestaurantId = restaurantId,
+                    Details = _faker.Lorem.Sentence()
+                }, user.Token);
+
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+
+                var result = await ex.GetResponseJsonAsync<ErrorResponse>();
+
+                result.Should().NotBeNull();
+                result.Errors.Should().HaveCount(1);
+                result.Errors.First().Should().Be($"Restaurant with ID '{restaurantId}' not found.");
             }
         }
     }

@@ -1,9 +1,9 @@
 using System.Net.Mime;
-using System.Security.Claims;
 
 using FluentValidation;
 
 using HurryUpHaul.Api.Constants;
+using HurryUpHaul.Api.Extensions;
 using HurryUpHaul.Contracts.Http;
 using HurryUpHaul.Domain.Commands;
 
@@ -162,7 +162,7 @@ namespace HurryUpHaul.Api.Controllers
             return Ok(new MeResponse
             {
                 Username = User.Identity.Name,
-                Roles = User.Claims.Where(x => x.Type == ClaimTypes.Role).Select(x => x.Value).ToArray(),
+                Roles = User.Claims.Roles().ToArray(),
             });
         }
 

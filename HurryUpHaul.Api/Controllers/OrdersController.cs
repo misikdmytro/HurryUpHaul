@@ -2,7 +2,7 @@ using System.Net.Mime;
 
 using FluentValidation;
 
-using HurryUpHaul.Api.Constants;
+using HurryUpHaul.Api.Extensions;
 using HurryUpHaul.Contracts.Http;
 using HurryUpHaul.Domain.Commands;
 using HurryUpHaul.Domain.Queries;
@@ -76,10 +76,15 @@ namespace HurryUpHaul.Api.Controllers
 
             var result = await _mediator.Send(command, cancellationToken);
 
-            return Created($"/api/orders/{result.OrderId}", new CreateOrderResponse
-            {
-                OrderId = result.OrderId
-            });
+            return result.Errors?.Length > 0
+                ? BadRequest(new ErrorResponse
+                {
+                    Errors = result.Errors
+                })
+                : Created($"/api/orders/{result.OrderId}", new CreateOrderResponse
+                {
+                    OrderId = result.OrderId
+                });
         }
 
         /// <summary>
@@ -100,7 +105,6 @@ namespace HurryUpHaul.Api.Controllers
         /// <response code="404">Order not found</response>
         /// <response code="500">Internal server error</response>
         [HttpGet("{id}")]
-        [Authorize(Policy = AuthorizePolicies.Customer)]
         [ProducesResponseType(typeof(GetOrderResponse), 200)]
         [ProducesResponseType(typeof(ErrorResponse), 401)]
         [ProducesResponseType(typeof(ErrorResponse), 403)]
@@ -111,7 +115,8 @@ namespace HurryUpHaul.Api.Controllers
             var query = new GetOrderByIdQuery
             {
                 OrderId = id,
-                Username = User.Identity.Name
+                Requester = User.Identity.Name,
+                RequesterRoles = User.Claims.Roles().ToArray()
             };
 
             var result = await _mediator.Send(query, cancellationToken);

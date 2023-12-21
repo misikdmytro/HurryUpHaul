@@ -1,6 +1,7 @@
 using AutoMapper;
 
 using HurryUpHaul.Contracts.Models;
+using HurryUpHaul.Domain.Constants;
 using HurryUpHaul.Domain.Databases;
 using HurryUpHaul.Domain.Handlers;
 
@@ -13,8 +14,9 @@ namespace HurryUpHaul.Domain.Queries
 {
     public class GetOrderByIdQuery : IRequest<GetOrderByIdQueryResponse>
     {
-        public string Username { get; init; }
-        public string OrderId { get; init; }
+        public required string Requester { get; init; }
+        public required string[] RequesterRoles { get; init; }
+        public required string OrderId { get; init; }
     }
 
     public class GetOrderByIdQueryResponse
@@ -37,8 +39,15 @@ namespace HurryUpHaul.Domain.Queries
 
         protected override async Task<GetOrderByIdQueryResponse> HandleInternal(GetOrderByIdQuery request, CancellationToken cancellationToken)
         {
-            var order = await _dbContext.Orders.SingleOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
-            return order?.CreatedBy != request.Username
+            var order = await _dbContext.Orders
+                .Include(o => o.Restaurant)
+                .ThenInclude(r => r.Managers)
+                .SingleOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
+
+            return order == null ||
+                (order.CreatedBy != request.Requester &&
+                order.Restaurant.Managers.Any(m => m.UserName == request.Requester) != true &&
+                request.RequesterRoles?.Contains(Roles.Admin) != true)
                 ? new GetOrderByIdQueryResponse()
                 : new GetOrderByIdQueryResponse
                 {
