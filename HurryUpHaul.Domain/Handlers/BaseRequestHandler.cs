@@ -2,7 +2,6 @@ using MediatR;
 
 using Microsoft.Extensions.Logging;
 
-
 namespace HurryUpHaul.Domain.Handlers
 {
     internal abstract class BaseRequestHandler<TRequest, TResponse> : IRequestHandler<TRequest, TResponse>

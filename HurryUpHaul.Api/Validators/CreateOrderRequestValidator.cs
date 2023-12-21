@@ -1,8 +1,6 @@
 using FluentValidation;
 
-
 using HurryUpHaul.Contracts.Http;
-
 
 namespace HurryUpHaul.Api.Validators
 {

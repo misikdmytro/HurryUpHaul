@@ -2,7 +2,7 @@ using System.Security.Claims;
 
 namespace HurryUpHaul.Api.Extensions
 {
-    public static class ClaimsEnumerableExtensions
+    internal static class ClaimsEnumerableExtensions
     {
         public static IEnumerable<string> Roles(this IEnumerable<Claim> claims)
         {
