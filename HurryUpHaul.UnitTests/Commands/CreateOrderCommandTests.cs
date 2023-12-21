@@ -32,7 +32,7 @@ namespace HurryUpHaul.UnitTests.Commands
             // Arrange
             var restaraunt = new Restaurant
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().ToString(),
                 Name = _faker.Company.CompanyName()
             };
 

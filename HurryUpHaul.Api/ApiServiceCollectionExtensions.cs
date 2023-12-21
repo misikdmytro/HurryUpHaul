@@ -14,7 +14,8 @@ namespace HurryUpHaul.Api
                 .AddScoped<IValidator<CreateOrderRequest>, CreateOrderRequestValidator>()
                 .AddScoped<IValidator<RegisterUserRequest>, RegisterUserRequestValidator>()
                 .AddScoped<IValidator<AuthenticateUserRequest>, AuthenticateUserRequestValidator>()
-                .AddScoped<IValidator<AdminUpdateUserRequest>, AdminUpdateUserRequestValidator>();
+                .AddScoped<IValidator<AdminUpdateUserRequest>, AdminUpdateUserRequestValidator>()
+                .AddScoped<IValidator<CreateRestaurantRequest>, CreateRestaurantRequestValidator>();
         }
     }
 }

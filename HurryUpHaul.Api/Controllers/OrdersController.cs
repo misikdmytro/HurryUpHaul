@@ -52,10 +52,10 @@ namespace HurryUpHaul.Api.Controllers
         [HttpPost]
         [Authorize(Policy = "Customer")]
         [ProducesResponseType(typeof(CreateOrderResponse), 201)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(403)]
-        [ProducesResponseType(500)]
+        [ProducesResponseType(typeof(ErrorResponse), 400)]
+        [ProducesResponseType(typeof(ErrorResponse), 401)]
+        [ProducesResponseType(typeof(ErrorResponse), 403)]
+        [ProducesResponseType(typeof(ErrorResponse), 500)]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request, CancellationToken cancellationToken = default)
         {
             var validationResult = await _createOrderValidator.ValidateAsync(request, cancellationToken);
@@ -78,7 +78,7 @@ namespace HurryUpHaul.Api.Controllers
 
             return Created($"/api/orders/{result.OrderId}", new CreateOrderResponse
             {
-                Id = result.OrderId
+                OrderId = result.OrderId
             });
         }
 
@@ -102,15 +102,15 @@ namespace HurryUpHaul.Api.Controllers
         [HttpGet("{id}")]
         [Authorize(Policy = AuthorizePolicies.Customer)]
         [ProducesResponseType(typeof(GetOrderResponse), 200)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(403)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> GetOrderById([FromRoute] Guid id, CancellationToken cancellationToken = default)
+        [ProducesResponseType(typeof(ErrorResponse), 401)]
+        [ProducesResponseType(typeof(ErrorResponse), 403)]
+        [ProducesResponseType(typeof(ErrorResponse), 404)]
+        [ProducesResponseType(typeof(ErrorResponse), 500)]
+        public async Task<IActionResult> GetOrderById([FromRoute] string id, CancellationToken cancellationToken = default)
         {
             var query = new GetOrderByIdQuery
             {
-                Id = id,
+                OrderId = id,
                 Username = User.Identity.Name
             };
 

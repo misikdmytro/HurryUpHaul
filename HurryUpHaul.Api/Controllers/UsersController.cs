@@ -41,7 +41,7 @@ namespace HurryUpHaul.Api.Controllers
         /// </summary>
         /// <param name="request">Register user request</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>OK</returns>
+        /// <returns>Registered user ID</returns>
         /// <remarks>
         /// Sample request:
         /// 
@@ -56,8 +56,8 @@ namespace HurryUpHaul.Api.Controllers
         /// <response code="400">Invalid request</response>
         /// <response code="500">Internal server error</response>
         [HttpPost]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(500)]
+        [ProducesResponseType(typeof(ErrorResponse), 400)]
+        [ProducesResponseType(typeof(ErrorResponse), 500)]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserRequest request, CancellationToken cancellationToken = default)
         {
             var validationResult = await _registerUserValidator.ValidateAsync(request, cancellationToken);
@@ -81,7 +81,10 @@ namespace HurryUpHaul.Api.Controllers
                 {
                     Errors = result.Errors.Select(x => x.Description).ToArray()
                 })
-                : Ok();
+                : Ok(new RegisterUserResponse
+                {
+                    UserId = result.UserId
+                });
         }
 
         /// <summary>
@@ -105,8 +108,8 @@ namespace HurryUpHaul.Api.Controllers
         /// <response code="500">Internal server error</response>
         [HttpPost("token")]
         [ProducesResponseType(typeof(AuthenticateUserResponse), 200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(500)]
+        [ProducesResponseType(typeof(ErrorResponse), 400)]
+        [ProducesResponseType(typeof(ErrorResponse), 500)]
         public async Task<IActionResult> AuthenticateUser([FromBody] AuthenticateUserRequest request, CancellationToken cancellationToken = default)
         {
             var validationResult = await _authenticateUserValidator.ValidateAsync(request, cancellationToken);
@@ -152,8 +155,8 @@ namespace HurryUpHaul.Api.Controllers
         [HttpGet("me")]
         [Authorize]
         [ProducesResponseType(typeof(MeResponse), 200)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(500)]
+        [ProducesResponseType(typeof(ErrorResponse), 401)]
+        [ProducesResponseType(typeof(ErrorResponse), 500)]
         public IActionResult GetCurrentUser()
         {
             return Ok(new MeResponse
@@ -186,9 +189,9 @@ namespace HurryUpHaul.Api.Controllers
         /// <response code="500">Internal server error</response>
         [HttpPut("admin")]
         [Authorize(Policy = AuthorizePolicies.Admin)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(403)]
-        [ProducesResponseType(500)]
+        [ProducesResponseType(typeof(ErrorResponse), 401)]
+        [ProducesResponseType(typeof(ErrorResponse), 403)]
+        [ProducesResponseType(typeof(ErrorResponse), 500)]
         public async Task<IActionResult> AdminUpdateUser([FromBody] AdminUpdateUserRequest request, CancellationToken cancellationToken = default)
         {
             var validationResult = await _adminUpdateUserValidator.ValidateAsync(request, cancellationToken);

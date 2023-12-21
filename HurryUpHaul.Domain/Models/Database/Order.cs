@@ -9,7 +9,7 @@ namespace HurryUpHaul.Domain.Models.Database
     internal class Order
     {
         [Key]
-        public Guid Id { get; set; }
+        public string Id { get; set; }
 
         [Required]
         [MaxLength(2000)]
@@ -29,6 +29,6 @@ namespace HurryUpHaul.Domain.Models.Database
 
         [Required]
         [ForeignKey(nameof(Restaurant))]
-        public Guid RestaurantId { get; set; }
+        public string RestaurantId { get; set; }
     }
 }

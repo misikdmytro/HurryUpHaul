@@ -1,26 +1,23 @@
 using System.Net;
-using System.Net.Mime;
-using System.Text;
 
 using FluentAssertions;
+
+using Flurl.Http;
 
 using HurryUpHaul.Contracts.Http;
 using HurryUpHaul.Contracts.Models;
 
 using Microsoft.AspNetCore.Mvc.Testing;
 
-using Newtonsoft.Json;
-
 namespace HurryUpHaul.IntegrationTests
 {
-    // ToDo: introduce Restaurants API and fix tests
     public class OrdersTests : Base
     {
         public OrdersTests(WebApplicationFactory<Program> factory) : base(factory)
         {
         }
 
-        [Theory(Skip = "needs Restaurants API")]
+        [Theory]
         [InlineData("details")]
         [InlineData("détails")]
         [InlineData("细节")]
@@ -31,163 +28,173 @@ namespace HurryUpHaul.IntegrationTests
         [InlineData("details with emoji 🤓")]
         public async Task CreateAndGetOrderShouldDoIt(string details)
         {
-            // 1. create order
+            // 1. create restaurant
+            var admin = await CreateTestUser("admin");
+
+            var restaurant = await _apiClient.CreateRestaurant(new CreateRestaurantRequest
+            {
+                Name = _faker.Company.CompanyName(),
+                ManagersIds = [admin.Id]
+            }, admin.Token);
+
+            // 2. create order
             var user = await CreateTestUser();
 
-            var client = _factory.CreateClient();
-            var createOrderRequest = new CreateOrderRequest
+            var createRequest = new CreateOrderRequest
             {
+                RestaurantId = restaurant.RestaurantId,
                 Details = details
             };
-            using var createOrderHttpRequest = new HttpRequestMessage(HttpMethod.Post, "api/orders");
-            createOrderHttpRequest.Content = new StringContent(JsonConvert.SerializeObject(createOrderRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
-            createOrderHttpRequest.Headers.Add("Authorization", $"Bearer {user.Token}");
+            var createResult = await _apiClient.CreateOrder(createRequest, user.Token);
 
-            using var createOrderResponse = await client.SendAsync(createOrderHttpRequest);
+            createResult.Should().NotBeNull();
+            createResult.OrderId.Should().NotBeNullOrEmpty();
 
-            createOrderResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-            createOrderResponse.Headers.Location.Should().NotBeNull();
+            // 3. get order
+            var getResult = await _apiClient.GetOrder(createResult.OrderId, user.Token);
 
-            var responseContent = await createOrderResponse.Content.ReadFromJsonAsync<CreateOrderResponse>();
-
-            responseContent.Should().NotBeNull();
-            responseContent.Id.Should().NotBe(default(Guid));
-
-            // 2. get order
-            using var getOrderHttpRequest = new HttpRequestMessage(HttpMethod.Get, createOrderResponse.Headers.Location);
-            getOrderHttpRequest.Headers.Add("Authorization", $"Bearer {user.Token}");
-
-            using var getOrderResponse = await client.SendAsync(getOrderHttpRequest);
-
-            getOrderResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-            var getOrderResponseContent = await getOrderResponse.Content.ReadFromJsonAsync<GetOrderResponse>();
-
-            getOrderResponseContent.Should().NotBeNull();
-            getOrderResponseContent.Order.Should().NotBeNull();
-            getOrderResponseContent.Order.Id.Should().Be(responseContent.Id);
-            getOrderResponseContent.Order.Details.Should().Be(createOrderRequest.Details);
-            getOrderResponseContent.Order.CreatedBy.Should().NotBeNullOrEmpty();
-            getOrderResponseContent.Order.CreatedAt.Should().NotBe(default);
-            getOrderResponseContent.Order.LastUpdatedAt.Should().NotBe(default);
-            getOrderResponseContent.Order.Status.Should().Be(OrderStatus.Created);
+            getResult.Should().NotBeNull();
+            getResult.Order.Should().NotBeNull();
+            getResult.Order.Id.Should().Be(createResult.OrderId);
+            getResult.Order.Details.Should().Be(details);
+            getResult.Order.CreatedBy.Should().NotBeNullOrEmpty();
+            getResult.Order.CreatedAt.Should().NotBe(default);
+            getResult.Order.LastUpdatedAt.Should().NotBe(default);
+            getResult.Order.Status.Should().Be(OrderStatus.Created);
         }
 
-        [Fact(Skip = "needs Restaurants API")]
+        [Fact]
         public async Task GetOrderShouldFailForNonCreator()
         {
-            // 1. create order
+            // 1. create restaurant
+            var admin = await CreateTestUser("admin");
+
+            var restaurant = await _apiClient.CreateRestaurant(new CreateRestaurantRequest
+            {
+                Name = _faker.Company.CompanyName(),
+                ManagersIds = [admin.Id]
+            }, admin.Token);
+
+            // 2. create order
             var user1 = await CreateTestUser();
 
-            var client = _factory.CreateClient();
-            var createOrderRequest = new CreateOrderRequest
+            var creadeOrderResult = await _apiClient.CreateOrder(new CreateOrderRequest
             {
+                RestaurantId = restaurant.RestaurantId,
                 Details = _faker.Lorem.Sentence()
-            };
-            using var createOrderHttpRequest = new HttpRequestMessage(HttpMethod.Post, "api/orders");
-            createOrderHttpRequest.Content = new StringContent(JsonConvert.SerializeObject(createOrderRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
-            createOrderHttpRequest.Headers.Add("Authorization", $"Bearer {user1.Token}");
+            }, user1.Token);
 
-            using var createOrderResponse = await client.SendAsync(createOrderHttpRequest);
-
-            createOrderResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-            createOrderResponse.Headers.Location.Should().NotBeNull();
-
-            var responseContent = await createOrderResponse.Content.ReadFromJsonAsync<CreateOrderResponse>();
-
-            responseContent.Should().NotBeNull();
-            responseContent.Id.Should().NotBe(default(Guid));
-
-            // 2. get order
+            // 3. get order
             var user2 = await CreateTestUser();
 
-            using var getOrderHttpRequest = new HttpRequestMessage(HttpMethod.Get, createOrderResponse.Headers.Location);
-            getOrderHttpRequest.Headers.Add("Authorization", $"Bearer {user2.Token}");
+            try
+            {
+                await _apiClient.GetOrder(creadeOrderResult.OrderId, user2.Token);
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
 
-            using var getOrderResponse = await client.SendAsync(getOrderHttpRequest);
+                var responseContent = await ex.GetResponseJsonAsync<ErrorResponse>();
 
-            getOrderResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
-
-            var getOrderResponseContent = await getOrderResponse.Content.ReadFromJsonAsync<ErrorResponse>();
-
-            getOrderResponseContent.Should().NotBeNull();
-            getOrderResponseContent.Errors.Should().HaveCount(1);
-
-            getOrderResponseContent.Errors.First().Should().Be($"Order with ID '{responseContent.Id}' not found.");
+                responseContent.Should().NotBeNull();
+                responseContent.Errors.Should().HaveCount(1);
+                responseContent.Errors.First().Should().Be($"Order with ID '{creadeOrderResult.OrderId}' not found.");
+            }
         }
 
-        [Fact(Skip = "needs Restaurants API")]
+        [Fact]
         public async Task GetOrderShouldReturnNotFoundWhenOrderDoesNotExist()
         {
             // Arrange
             var user = await CreateTestUser();
+            var orderId = Guid.NewGuid().ToString();
 
-            var client = _factory.CreateClient();
-            var id = Guid.NewGuid();
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"api/orders/{id}");
-            httpRequest.Headers.Add("Authorization", $"Bearer {user.Token}");
+            try
+            {
+                // Act
+                await _apiClient.GetOrder(orderId, user.Token);
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                // Assert
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
 
-            // Act
-            using var response = await client.SendAsync(httpRequest);
+                var responseContent = await ex.GetResponseJsonAsync<ErrorResponse>();
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-
-            var getOrderResponseContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-
-            getOrderResponseContent.Should().NotBeNull();
-            getOrderResponseContent.Errors.Should().HaveCount(1);
-
-            getOrderResponseContent.Errors.First().Should().Be($"Order with ID '{id}' not found.");
+                responseContent.Should().NotBeNull();
+                responseContent.Errors.Should().HaveCount(1);
+                responseContent.Errors.First().Should().Be($"Order with ID '{orderId}' not found.");
+            }
         }
 
-        [Theory(Skip = "needs Restaurants API")]
+        [Theory]
         [InlineData(null)]
         [InlineData("")]
         public async Task CreateOrderShouldReturnBadRequestWhenDetailsIsNullOrEmpty(string details)
         {
-            // Arrange
+            // 1. create restaurant
+            var owner = await CreateTestUser("admin");
             var user = await CreateTestUser();
 
-            var client = _factory.CreateClient();
-            var request = new CreateOrderRequest
+            var restaurant = await _apiClient.CreateRestaurant(new CreateRestaurantRequest
             {
-                Details = details
-            };
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/orders");
-            httpRequest.Content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
-            httpRequest.Headers.Add("Authorization", $"Bearer {user.Token}");
+                Name = _faker.Company.CompanyName(),
+                ManagersIds = [owner.Id]
+            }, owner.Token);
 
-            // Act
-            using var response = await client.SendAsync(httpRequest);
+            try
+            {
+                // 2. create order
+                await _apiClient.CreateOrder(new CreateOrderRequest
+                {
+                    RestaurantId = restaurant.RestaurantId,
+                    Details = details
+                }, user.Token);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
 
-            var responseContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                var result = await ex.GetResponseJsonAsync<ErrorResponse>();
 
-            responseContent.Should().NotBeNull();
-            responseContent.Errors.Should().HaveCount(1);
-            responseContent.Errors.First().Should().Be("'Details' must not be empty.");
+                result.Should().NotBeNull();
+                result.Errors.Should().HaveCount(1);
+                result.Errors.First().Should().Be("'Details' must not be empty.");
+            }
         }
 
-        [Fact(Skip = "needs Restaurants API")]
+        [Fact]
         public async Task CreateOrderShouldReturnUnauthorizedWhenNotAuthenticated()
         {
-            // Arrange
-            var client = _factory.CreateClient();
-            var request = new CreateOrderRequest
+            // 1. create restaurant
+            var owner = await CreateTestUser("admin");
+
+            var restaurant = await _apiClient.CreateRestaurant(new CreateRestaurantRequest
             {
-                Details = _faker.Lorem.Sentence()
-            };
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/orders");
-            httpRequest.Content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
+                Name = _faker.Company.CompanyName(),
+                ManagersIds = [owner.Id]
+            }, owner.Token);
 
-            // Act
-            using var response = await client.SendAsync(httpRequest);
+            try
+            {
+                // 2. create order
+                await _apiClient.CreateOrder(new CreateOrderRequest
+                {
+                    RestaurantId = restaurant.RestaurantId,
+                    Details = _faker.Lorem.Sentence()
+                });
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.Unauthorized);
+            }
         }
     }
 }

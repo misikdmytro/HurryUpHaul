@@ -11,14 +11,14 @@ namespace HurryUpHaul.Domain.Commands
 {
     public class CreateOrderCommand : IRequest<CreateOrderCommandResult>
     {
-        public required Guid RestaurantId { get; init; }
+        public required string RestaurantId { get; init; }
         public required string Customer { get; init; }
         public required string OrderDetails { get; init; }
     }
 
     public class CreateOrderCommandResult
     {
-        public Guid OrderId { get; init; }
+        public string OrderId { get; init; }
         public string[] Errors { get; init; }
     }
 
@@ -37,12 +37,11 @@ namespace HurryUpHaul.Domain.Commands
 
         protected override async Task<CreateOrderCommandResult> HandleInternal(CreateOrderCommand request, CancellationToken cancellationToken)
         {
-            var orderId = Guid.NewGuid();
             var now = _dateTimeProvider.Now;
 
             var order = new Order
             {
-                Id = orderId,
+                Id = Guid.NewGuid().ToString(),
                 Details = request.OrderDetails,
                 Status = OrderStatus.Created,
                 CreatedAt = now,
@@ -56,7 +55,7 @@ namespace HurryUpHaul.Domain.Commands
 
             return new CreateOrderCommandResult
             {
-                OrderId = orderId
+                OrderId = order.Id
             };
 
             // ToDo: handle foreign key constraint exception

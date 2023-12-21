@@ -1,14 +1,12 @@
 using System.Net;
-using System.Net.Mime;
-using System.Text;
 
 using FluentAssertions;
+
+using Flurl.Http;
 
 using HurryUpHaul.Contracts.Http;
 
 using Microsoft.AspNetCore.Mvc.Testing;
-
-using Newtonsoft.Json;
 
 namespace HurryUpHaul.IntegrationTests
 {
@@ -22,49 +20,31 @@ namespace HurryUpHaul.IntegrationTests
         public async Task RegisterAndAuthenticateUserShouldDoIt()
         {
             // 1. registration
-            var client = _factory.CreateClient();
             var registerRequest = new RegisterUserRequest
             {
                 Username = $"test_{_faker.Database.Random.Uuid():N}",
                 Password = "TestPassword123!?"
             };
-            using var registerContent = new StringContent(JsonConvert.SerializeObject(registerRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
+            var registerResponse = await _apiClient.RegisterUser(registerRequest);
 
-            using var registerResponse = await client.PostAsync("api/users", registerContent);
-
-            registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            registerResponse.UserId.Should().NotBeNullOrEmpty();
 
             // 2. authentication
-            var authenticateRequest = new AuthenticateUserRequest
+            var authenticateResponse = await _apiClient.AuthenticateUser(new AuthenticateUserRequest
             {
                 Username = registerRequest.Username,
                 Password = registerRequest.Password
-            };
+            });
 
-            using var authenticateContent = new StringContent(JsonConvert.SerializeObject(authenticateRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
-
-            using var authenticateResponse = await client.PostAsync("api/users/token", authenticateContent);
-
-            authenticateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-            var authenticateResponseContent = await authenticateResponse.Content.ReadFromJsonAsync<AuthenticateUserResponse>();
-
-            authenticateResponseContent.Should().NotBeNull();
-            authenticateResponseContent.Token.Should().NotBeNullOrEmpty();
+            authenticateResponse.Should().NotBeNull();
+            authenticateResponse.Token.Should().NotBeNullOrEmpty();
 
             // 3. me
-            using var meHttpRequest = new HttpRequestMessage(HttpMethod.Get, "api/users/me");
-            meHttpRequest.Headers.Add("Authorization", $"Bearer {authenticateResponseContent.Token}");
+            var meResponse = await _apiClient.Me(authenticateResponse.Token);
 
-            using var meResponse = await client.SendAsync(meHttpRequest);
-
-            meResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-            var meResponseContent = await meResponse.Content.ReadFromJsonAsync<MeResponse>();
-
-            meResponseContent.Should().NotBeNull();
-            meResponseContent.Username.Should().Be(registerRequest.Username);
-            meResponseContent.Roles.Should().BeEquivalentTo(["customer"]);
+            meResponse.Should().NotBeNull();
+            meResponse.Username.Should().Be(registerRequest.Username);
+            meResponse.Roles.Should().BeEquivalentTo(["customer"]);
         }
 
         [Theory]
@@ -79,86 +59,83 @@ namespace HurryUpHaul.IntegrationTests
         [InlineData("TestUser", "Long!nodigits", "Passwords must have at least one digit ('0'-'9').")]
         public async Task RegisterUserShouldReturnBadRequestWhenUsernameOrPasswordIsNullOrEmpty(string username, string password, params string[] errors)
         {
-            // Arrange
-            var client = _factory.CreateClient();
-            var request = new RegisterUserRequest
+            try
             {
-                Username = username,
-                Password = password
-            };
-            using var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
+                await _apiClient.RegisterUser(new RegisterUserRequest
+                {
+                    Username = username,
+                    Password = password
+                });
 
-            // Act
-            using var response = await client.PostAsync("api/users", content);
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+                var responseContent = await ex.GetResponseJsonAsync<ErrorResponse>();
 
-            var responseContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-
-            responseContent.Should().NotBeNull();
-            responseContent.Errors.Should().BeEquivalentTo(errors);
+                responseContent.Should().NotBeNull();
+                responseContent.Errors.Should().BeEquivalentTo(errors);
+            }
         }
 
         [Fact]
         public async Task AuthenticateUserShouldReturnBadRequestWhenUserDoesNotExists()
         {
-            // Arrange
-            var client = _factory.CreateClient();
-            var request = new AuthenticateUserRequest
+            try
             {
-                Username = $"test_{_faker.Database.Random.Uuid():N}",
-                Password = "TestPassword123!?"
-            };
-            using var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, MediaTypeNames.Application.Json);
+                await _apiClient.AuthenticateUser(new AuthenticateUserRequest
+                {
+                    Username = $"test_{_faker.Database.Random.Uuid():N}",
+                    Password = "TestPassword123!?"
+                });
 
-            // Act
-            using var response = await client.PostAsync("api/users/token", content);
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+                var responseContent = await ex.GetResponseJsonAsync<ErrorResponse>();
 
-            var responseContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-
-            responseContent.Should().NotBeNull();
-            responseContent.Errors.Should().HaveCount(1);
-            responseContent.Errors.First().Should().Be("Invalid username or password.");
+                responseContent.Should().NotBeNull();
+                responseContent.Errors.Should().HaveCount(1);
+                responseContent.Errors.First().Should().Be("Invalid username or password.");
+            }
         }
 
         [Fact]
         public async Task AuthenticateUserShouldReturnBadRequestWhenPasswordIsIncorrect()
         {
-            // Arrange
-            var client = _factory.CreateClient();
+            // 1. registration
             var registerRequest = new RegisterUserRequest
             {
                 Username = $"test_{_faker.Database.Random.Uuid():N}",
                 Password = "TestPassword123!?"
             };
-            using var registerContent = new StringContent(JsonConvert.SerializeObject(registerRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
+            await _apiClient.RegisterUser(registerRequest);
 
-            using var registerResponse = await client.PostAsync("api/users", registerContent);
-
-            registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-            var authenticateRequest = new AuthenticateUserRequest
+            try
             {
-                Username = registerRequest.Username,
-                Password = "IncorrectPassword123!?"
-            };
-            using var authenticateContent = new StringContent(JsonConvert.SerializeObject(authenticateRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
+                // 2. authentication
+                await _apiClient.AuthenticateUser(new AuthenticateUserRequest
+                {
+                    Username = registerRequest.Username,
+                    Password = "IncorrectPassword123!?"
+                });
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
 
-            // Act
-            using var authenticateResponse = await client.PostAsync("api/users/token", authenticateContent);
+                var responseContent = await ex.GetResponseJsonAsync<ErrorResponse>();
 
-            // Assert
-            authenticateResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-            var authenticateResponseContent = await authenticateResponse.Content.ReadFromJsonAsync<ErrorResponse>();
-
-            authenticateResponseContent.Should().NotBeNull();
-            authenticateResponseContent.Errors.Should().HaveCount(1);
-            authenticateResponseContent.Errors.First().Should().Be("Invalid username or password.");
+                responseContent.Should().NotBeNull();
+                responseContent.Errors.Should().HaveCount(1);
+                responseContent.Errors.First().Should().Be("Invalid username or password.");
+            }
         }
 
         public static IEnumerable<object[]> AdminUpdateUserDataSuccess => new object[][]
@@ -184,8 +161,6 @@ namespace HurryUpHaul.IntegrationTests
         [MemberData(nameof(AdminUpdateUserDataSuccess))]
         public async Task AdminUpdateUserShouldUpdateUser(string[] rolesToAdd, string[] rolesToRemove, string[] expectedRoles)
         {
-            var client = _factory.CreateClient();
-
             // 1. create customer
             var user = await CreateTestUser();
 
@@ -193,7 +168,7 @@ namespace HurryUpHaul.IntegrationTests
             var admin = await CreateTestUser("admin");
 
             // 3. update user
-            var adminUpdateRequest = new AdminUpdateUserRequest
+            await _apiClient.AdminUpdate(new AdminUpdateUserRequest
             {
                 Username = user.Username,
                 Roles = rolesToAdd
@@ -208,43 +183,20 @@ namespace HurryUpHaul.IntegrationTests
                         Action = UpdateRoleAction.Remove
                     }))
                     .ToArray()
-            };
-
-            using var adminUpdateHttpRequest = new HttpRequestMessage(HttpMethod.Put, "api/users/admin");
-            adminUpdateHttpRequest.Content = new StringContent(JsonConvert.SerializeObject(adminUpdateRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
-            adminUpdateHttpRequest.Headers.Add("Authorization", $"Bearer {admin.Token}");
-
-            using var adminUpdateResponse = await client.SendAsync(adminUpdateHttpRequest);
-
-            adminUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            }, admin.Token);
 
             // 4. authenticate again as user
-            var authenticateRequest = new AuthenticateUserRequest
+            var authResult = await _apiClient.AuthenticateUser(new AuthenticateUserRequest
             {
                 Username = user.Username,
                 Password = user.Password
-            };
-
-            using var authenticateContent = new StringContent(JsonConvert.SerializeObject(authenticateRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
-
-            using var authenticateResponse = await client.PostAsync("api/users/token", authenticateContent);
-
-            authenticateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-            var authenticateResponseContent = await authenticateResponse.Content.ReadFromJsonAsync<AuthenticateUserResponse>();
+            });
 
             // 5. 'me' as user
-            using var meHttpRequest = new HttpRequestMessage(HttpMethod.Get, "api/users/me");
-            meHttpRequest.Headers.Add("Authorization", $"Bearer {authenticateResponseContent.Token}");
+            var meResult = await _apiClient.Me(authResult.Token);
 
-            using var meResponse = await client.SendAsync(meHttpRequest);
-
-            meResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-            var meResponseContent = await meResponse.Content.ReadFromJsonAsync<MeResponse>();
-
-            meResponseContent.Should().NotBeNull();
-            meResponseContent.Roles.Should().BeEquivalentTo(expectedRoles);
+            meResult.Should().NotBeNull();
+            meResult.Roles.Should().BeEquivalentTo(expectedRoles);
         }
     }
 }

@@ -55,7 +55,7 @@ namespace HurryUpHaul.Domain.Migrations
                 name: "Restaurants",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -175,7 +175,7 @@ namespace HurryUpHaul.Domain.Migrations
                 columns: table => new
                 {
                     ManagersId = table.Column<string>(type: "text", nullable: false),
-                    RestaurantId = table.Column<Guid>(type: "uuid", nullable: false)
+                    RestaurantId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -198,13 +198,13 @@ namespace HurryUpHaul.Domain.Migrations
                 name: "Orders",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<string>(type: "text", nullable: false),
                     Details = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    RestaurantId = table.Column<Guid>(type: "uuid", nullable: false)
+                    RestaurantId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {

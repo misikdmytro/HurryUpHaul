@@ -7,7 +7,7 @@ namespace HurryUpHaul.Domain.Models.Database
     internal class Restaurant
     {
         [Key]
-        public Guid Id { get; set; }
+        public string Id { get; set; }
 
         [Required]
         [MaxLength(256)]

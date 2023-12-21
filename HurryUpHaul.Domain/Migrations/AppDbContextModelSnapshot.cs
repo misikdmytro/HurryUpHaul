@@ -24,9 +24,8 @@ namespace HurryUpHaul.Domain.Migrations
 
             modelBuilder.Entity("HurryUpHaul.Domain.Models.Database.Order", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -44,8 +43,9 @@ namespace HurryUpHaul.Domain.Migrations
                     b.Property<DateTime>("LastUpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("RestaurantId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("RestaurantId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -61,9 +61,8 @@ namespace HurryUpHaul.Domain.Migrations
 
             modelBuilder.Entity("HurryUpHaul.Domain.Models.Database.Restaurant", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -83,8 +82,8 @@ namespace HurryUpHaul.Domain.Migrations
                     b.Property<string>("ManagersId")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("RestaurantId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("RestaurantId")
+                        .HasColumnType("text");
 
                     b.HasKey("ManagersId", "RestaurantId");
 

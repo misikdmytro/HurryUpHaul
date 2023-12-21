@@ -14,7 +14,7 @@ namespace HurryUpHaul.Domain.Queries
     public class GetOrderByIdQuery : IRequest<GetOrderByIdQueryResponse>
     {
         public string Username { get; init; }
-        public Guid Id { get; init; }
+        public string OrderId { get; init; }
     }
 
     public class GetOrderByIdQueryResponse
@@ -37,7 +37,7 @@ namespace HurryUpHaul.Domain.Queries
 
         protected override async Task<GetOrderByIdQueryResponse> HandleInternal(GetOrderByIdQuery request, CancellationToken cancellationToken)
         {
-            var order = await _dbContext.Orders.SingleOrDefaultAsync(o => o.Id == request.Id, cancellationToken);
+            var order = await _dbContext.Orders.SingleOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
             return order?.CreatedBy != request.Username
                 ? new GetOrderByIdQueryResponse()
                 : new GetOrderByIdQueryResponse

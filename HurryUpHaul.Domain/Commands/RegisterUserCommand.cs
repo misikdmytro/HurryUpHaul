@@ -16,6 +16,7 @@ namespace HurryUpHaul.Domain.Commands
 
     public class RegisterUserCommandResult
     {
+        public string UserId { get; init; }
         public bool Success { get; init; }
         public IEnumerable<IdentityError> Errors { get; init; }
     }
@@ -59,6 +60,7 @@ namespace HurryUpHaul.Domain.Commands
 
             return new RegisterUserCommandResult
             {
+                UserId = user.Id,
                 Success = result.Succeeded,
                 Errors = result.Errors
             };

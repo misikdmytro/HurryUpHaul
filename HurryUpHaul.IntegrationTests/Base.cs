@@ -1,6 +1,3 @@
-using System.Net.Mime;
-using System.Text;
-
 using Bogus;
 
 using HurryUpHaul.Contracts.Http;
@@ -8,12 +5,11 @@ using HurryUpHaul.Contracts.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 
-using Newtonsoft.Json;
-
 namespace HurryUpHaul.IntegrationTests
 {
     internal class UserInfo
     {
+        public string Id { get; init; }
         public string Username { get; init; }
         public string Password { get; init; }
         public string Role { get; init; }
@@ -22,15 +18,15 @@ namespace HurryUpHaul.IntegrationTests
 
     public class Base : IClassFixture<WebApplicationFactory<Program>>, IDisposable
     {
-        protected readonly WebApplicationFactory<Program> _factory;
         protected readonly Faker _faker;
+        private protected readonly IApiClient _apiClient;
         private readonly IServiceScope _scope;
 
         public Base(WebApplicationFactory<Program> factory)
         {
-            _factory = factory;
+            _apiClient = new ApiClient(factory.CreateClient());
+            _scope = factory.Services.CreateScope();
             _faker = new Faker();
-            _scope = _factory.Services.CreateScope();
         }
 
         public void Dispose()
@@ -45,22 +41,19 @@ namespace HurryUpHaul.IntegrationTests
             if (disposing)
             {
                 _scope?.Dispose();
+                _apiClient?.Dispose();
             }
         }
 
         private protected async Task<UserInfo> CreateTestUser(string role = "customer")
         {
             // 1. registration
-            var client = _factory.CreateClient();
             var registrationRequest = new RegisterUserRequest
             {
                 Username = $"test_{_faker.Database.Random.Uuid():N}",
                 Password = $"Aa1!_{_faker.Internet.Password()}"
             };
-            using var registrationContent = new StringContent(JsonConvert.SerializeObject(registrationRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
-
-            using var registrationResponse = await client.PostAsync("api/users", registrationContent);
-            registrationResponse.EnsureSuccessStatusCode();
+            var registrationResponse = await _apiClient.RegisterUser(registrationRequest);
 
             // 2. role assignment
             var roleManager = _scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -80,24 +73,19 @@ namespace HurryUpHaul.IntegrationTests
             }
 
             // 3. authentication
-            var authenticateRequest = new AuthenticateUserRequest
+            var authenticateResponse = await _apiClient.AuthenticateUser(new AuthenticateUserRequest
             {
                 Username = registrationRequest.Username,
                 Password = registrationRequest.Password
-            };
+            });
 
-            using var authenticateContent = new StringContent(JsonConvert.SerializeObject(authenticateRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
-
-            using var authenticateResponse = await client.PostAsync("api/users/token", authenticateContent);
-            authenticateResponse.EnsureSuccessStatusCode();
-
-            var authenticateResponseContent = await authenticateResponse.Content.ReadFromJsonAsync<AuthenticateUserResponse>();
             return new UserInfo
             {
+                Id = registrationResponse.UserId,
                 Username = registrationRequest.Username,
                 Password = registrationRequest.Password,
                 Role = role,
-                Token = authenticateResponseContent.Token
+                Token = authenticateResponse.Token
             };
         }
     }
