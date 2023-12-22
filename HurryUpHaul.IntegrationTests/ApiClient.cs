@@ -7,6 +7,7 @@ namespace HurryUpHaul.IntegrationTests
 {
     internal interface IApiClient : IDisposable
     {
+        Task<CreateRestaurantResponse> CreateRestaurant(CreateRestaurantRequest request);
         Task<CreateRestaurantResponse> CreateRestaurant(CreateRestaurantRequest request, string token);
         Task<GetRestaurantResponse> GetRestaurant(string restaurantId);
         Task<GetRestaurantResponse> GetRestaurant(string restaurantId, string token);
@@ -61,6 +62,17 @@ namespace HurryUpHaul.IntegrationTests
                 .AllowHttpStatus(201)
                 .PostJsonAsync(request)
                 .ReceiveJson<CreateOrderResponse>();
+        }
+
+        public Task<CreateRestaurantResponse> CreateRestaurant(CreateRestaurantRequest request)
+        {
+            return _client
+                .Request()
+                .AppendPathSegment("api")
+                .AppendPathSegment("restaurants")
+                .AllowHttpStatus(201)
+                .PostJsonAsync(request)
+                .ReceiveJson<CreateRestaurantResponse>();
         }
 
         public Task<CreateRestaurantResponse> CreateRestaurant(CreateRestaurantRequest request, string token)

@@ -5,6 +5,7 @@ using FluentAssertions;
 using Flurl.Http;
 
 using HurryUpHaul.Contracts.Http;
+using HurryUpHaul.Domain.Commands;
 
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -150,6 +151,48 @@ namespace HurryUpHaul.IntegrationTests
                 result.Errors.Should().HaveCount(1);
 
                 result.Errors.First().Should().Be("Managers Ids must not contain more than 10 values");
+            }
+        }
+
+        [Fact]
+        public async Task CreateRestaurantShouldReturnUnauthenticatedWhenUserIsNotAuthenticated()
+        {
+            var user = await CreateTestUser();
+
+            try
+            {
+                await _apiClient.CreateRestaurant(new CreateRestaurantRequest
+                {
+                    Name = "Test Restaurant",
+                    ManagersIds = [user.Id]
+                });
+
+                Assert.Fail("Expected FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.Unauthorized);
+            }
+        }
+
+        [Fact]
+        public async Task CreateRestaurantShouldBeForbiddenForUsers()
+        {
+            var user = await CreateTestUser();
+
+            try
+            {
+                await _apiClient.CreateRestaurant(new CreateRestaurantRequest
+                {
+                    Name = "Test Restaurant",
+                    ManagersIds = [user.Id]
+                }, user.Token);
+
+                Assert.Fail("Expected FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.Forbidden);
             }
         }
     }
