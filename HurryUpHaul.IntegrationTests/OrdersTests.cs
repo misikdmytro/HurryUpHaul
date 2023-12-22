@@ -7,13 +7,11 @@ using Flurl.Http;
 using HurryUpHaul.Contracts.Http;
 using HurryUpHaul.Contracts.Models;
 
-using Microsoft.AspNetCore.Mvc.Testing;
-
 namespace HurryUpHaul.IntegrationTests
 {
     public class OrdersTests : Base
     {
-        public OrdersTests(WebApplicationFactory<Program> factory) : base(factory)
+        public OrdersTests(CustomWebApplicationFactory<Program> factory) : base(factory)
         {
         }
 

@@ -4,7 +4,6 @@ using HurryUpHaul.Contracts.Http;
 using HurryUpHaul.Domain.Constants;
 
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace HurryUpHaul.IntegrationTests
 {
@@ -17,13 +16,13 @@ namespace HurryUpHaul.IntegrationTests
         public string Token { get; init; }
     }
 
-    public class Base : IClassFixture<WebApplicationFactory<Program>>, IDisposable
+    public class Base : IClassFixture<CustomWebApplicationFactory<Program>>, IDisposable
     {
         protected readonly Faker _faker;
         private protected readonly IApiClient _apiClient;
         private readonly IServiceScope _scope;
 
-        public Base(WebApplicationFactory<Program> factory)
+        public Base(CustomWebApplicationFactory<Program> factory)
         {
             _apiClient = new ApiClient(factory.CreateClient());
             _scope = factory.Services.CreateScope();

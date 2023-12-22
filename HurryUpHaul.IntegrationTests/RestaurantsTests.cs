@@ -6,13 +6,11 @@ using Flurl.Http;
 
 using HurryUpHaul.Contracts.Http;
 
-using Microsoft.AspNetCore.Mvc.Testing;
-
 namespace HurryUpHaul.IntegrationTests
 {
     public class RestaurantsTests : Base
     {
-        public RestaurantsTests(WebApplicationFactory<Program> factory) : base(factory)
+        public RestaurantsTests(CustomWebApplicationFactory<Program> factory) : base(factory)
         {
         }
 

@@ -79,7 +79,7 @@ namespace HurryUpHaul.Api.Controllers
             return !result.Success
                 ? BadRequest(new ErrorResponse
                 {
-                    Errors = result.Errors.Select(x => x.Description).ToArray()
+                    Errors = result.Errors
                 })
                 : Ok(new RegisterUserResponse
                 {

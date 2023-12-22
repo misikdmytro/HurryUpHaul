@@ -18,7 +18,7 @@ namespace HurryUpHaul.Domain.Commands
     {
         public string UserId { get; init; }
         public bool Success { get; init; }
-        public IEnumerable<IdentityError> Errors { get; init; }
+        public string[] Errors { get; init; }
     }
 
     internal class RegisterUserCommandHandler : BaseRequestHandler<RegisterUserCommand, RegisterUserCommandResult>
@@ -47,7 +47,7 @@ namespace HurryUpHaul.Domain.Commands
                 return new RegisterUserCommandResult
                 {
                     Success = false,
-                    Errors = result.Errors
+                    Errors = result.Errors.Select(x => x.Description).ToArray()
                 };
             }
 
@@ -62,7 +62,7 @@ namespace HurryUpHaul.Domain.Commands
             {
                 UserId = user.Id,
                 Success = result.Succeeded,
-                Errors = result.Errors
+                Errors = result.Errors?.Select(x => x.Description).ToArray()
             };
         }
     }

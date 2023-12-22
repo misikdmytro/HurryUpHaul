@@ -18,14 +18,14 @@ namespace HurryUpHaul.Domain.Handlers
         {
             try
             {
-                Logger.LogDebug("Handling request {request}", request);
+                Logger.LogDebug("Handling request {@Request}", request);
                 var result = await HandleInternal(request, cancellationToken);
-                Logger.LogInformation("Request {request} handled successfully. Result: {result}", request, result);
+                Logger.LogInformation("Request {@Request} handled successfully. Result: {@Result}", request, result);
                 return result;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error handling request {request}", request);
+                Logger.LogError(ex, "Error handling request {@Request}", request);
                 throw;
             }
         }

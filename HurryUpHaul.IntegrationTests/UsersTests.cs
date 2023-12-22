@@ -7,13 +7,11 @@ using Flurl.Http;
 using HurryUpHaul.Contracts.Http;
 using HurryUpHaul.Domain.Constants;
 
-using Microsoft.AspNetCore.Mvc.Testing;
-
 namespace HurryUpHaul.IntegrationTests
 {
     public class UsersTests : Base
     {
-        public UsersTests(WebApplicationFactory<Program> factory) : base(factory)
+        public UsersTests(CustomWebApplicationFactory<Program> factory) : base(factory)
         {
         }
 
