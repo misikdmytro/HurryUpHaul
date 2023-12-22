@@ -5,6 +5,7 @@ using FluentAssertions;
 using Flurl.Http;
 
 using HurryUpHaul.Contracts.Http;
+using HurryUpHaul.Domain.Constants;
 
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -44,7 +45,7 @@ namespace HurryUpHaul.IntegrationTests
 
             meResponse.Should().NotBeNull();
             meResponse.Username.Should().Be(registerRequest.Username);
-            meResponse.Roles.Should().BeEquivalentTo(["customer"]);
+            meResponse.Roles.Should().BeEquivalentTo([Roles.User]);
         }
 
         [Theory]
@@ -141,18 +142,18 @@ namespace HurryUpHaul.IntegrationTests
         public static IEnumerable<object[]> AdminUpdateUserDataSuccess => new object[][]
         {
             [
-                new string[] { "admin" },
-                new string[] { "customer" },
-                new string[] { "admin" }
+                new string[] { Roles.Admin },
+                new string[] { Roles.User },
+                new string[] { Roles.Admin }
             ],
             [
-                new string[] { "admin" },
+                new string[] { Roles.Admin },
                 Array.Empty<string>(),
-                new string[] { "customer", "admin" }
+                new string[] { Roles.User, Roles.Admin }
             ],
             [
                 Array.Empty<string>(),
-                new string[] { "customer" },
+                new string[] { Roles.User },
                 Array.Empty<string>()
             ]
         };
@@ -161,7 +162,7 @@ namespace HurryUpHaul.IntegrationTests
         [MemberData(nameof(AdminUpdateUserDataSuccess))]
         public async Task AdminUpdateUserShouldUpdateUser(string[] rolesToAdd, string[] rolesToRemove, string[] expectedRoles)
         {
-            // 1. create customer
+            // 1. create user
             var user = await CreateTestUser();
 
             // 2. create admin user
@@ -197,6 +198,121 @@ namespace HurryUpHaul.IntegrationTests
 
             meResult.Should().NotBeNull();
             meResult.Roles.Should().BeEquivalentTo(expectedRoles);
+        }
+
+        [Fact]
+        public async Task AdminUpdateUserShouldReturnBadRequestWhenRoleIsNotDefined()
+        {
+            // 1. create user
+            var user = await CreateTestUser();
+
+            // 2. create admin user
+            var admin = await CreateTestUser("admin");
+
+            try
+            {
+                // 3. update user
+                await _apiClient.AdminUpdate(new AdminUpdateUserRequest
+                {
+                    Username = user.Username,
+                    Roles =
+                    [
+                        new()
+                        {
+                            Role = "notdefined",
+                            Action = UpdateRoleAction.Add
+                        }
+                    ]
+                }, admin.Token);
+
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+
+                var responseContent = await ex.GetResponseJsonAsync<ErrorResponse>();
+
+                responseContent.Should().NotBeNull();
+                responseContent.Errors.Should().HaveCount(1);
+                responseContent.Errors.First().Should().Be("Roles must only contain the following roles: user, admin.");
+            }
+        }
+
+        [Fact]
+        public async Task AdminUpdateUserShouldReturnBadRequestWhenTheSameRoleAddedAndRemoved()
+        {
+            // 1. create user
+            var user = await CreateTestUser();
+
+            // 2. create admin user
+            var admin = await CreateTestUser("admin");
+
+            try
+            {
+                // 3. update user
+                await _apiClient.AdminUpdate(new AdminUpdateUserRequest
+                {
+                    Username = user.Username,
+                    Roles =
+                    [
+                        new()
+                        {
+                            Role = Roles.User,
+                            Action = UpdateRoleAction.Add
+                        },
+                        new()
+                        {
+                            Role = Roles.User,
+                            Action = UpdateRoleAction.Remove
+                        }
+                    ]
+                }, admin.Token);
+
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+
+                var responseContent = await ex.GetResponseJsonAsync<ErrorResponse>();
+
+                responseContent.Should().NotBeNull();
+                responseContent.Errors.Should().HaveCount(1);
+                responseContent.Errors.First().Should().Be("Roles must not contain duplicate roles.");
+            }
+        }
+
+        [Fact]
+        public async Task AdminUpdateUserShouldReturnBadRequestWhenRolesAreEmpty()
+        {
+            // 1. create user
+            var user = await CreateTestUser();
+
+            // 2. create admin user
+            var admin = await CreateTestUser("admin");
+
+            try
+            {
+                // 3. update user
+                await _apiClient.AdminUpdate(new AdminUpdateUserRequest
+                {
+                    Username = user.Username,
+                    Roles = []
+                }, admin.Token);
+
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+
+                var responseContent = await ex.GetResponseJsonAsync<ErrorResponse>();
+
+                responseContent.Should().NotBeNull();
+                responseContent.Errors.Should().HaveCount(1);
+                responseContent.Errors.First().Should().Be("'Roles' must not be empty.");
+            }
         }
     }
 }

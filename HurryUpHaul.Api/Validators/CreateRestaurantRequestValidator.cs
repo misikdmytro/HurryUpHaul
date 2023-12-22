@@ -15,11 +15,11 @@ namespace HurryUpHaul.Api.Validators
             RuleFor(x => x.ManagersIds)
                 .NotEmpty()
                 .Must(x => x == null || x.All(c => c != null && c.Length > 0))
-                .WithMessage($"Managers Ids must not contain null or empty values")
+                .WithMessage($"Managers Ids must not contain null or empty values.")
                 .Must(x => x == null || x.GroupBy(c => c).All(c => c.Count() == 1))
-                .WithMessage($"Managers Ids must not contain duplicate values")
+                .WithMessage($"Managers Ids must not contain duplicate values.")
                 .Must(x => x == null || x.Length <= 10)
-                .WithMessage($"Managers Ids must not contain more than 10 values");
+                .WithMessage($"Managers Ids must not contain more than 10 values.");
         }
     }
 }

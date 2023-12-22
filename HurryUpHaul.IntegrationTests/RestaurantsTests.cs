@@ -5,7 +5,6 @@ using FluentAssertions;
 using Flurl.Http;
 
 using HurryUpHaul.Contracts.Http;
-using HurryUpHaul.Domain.Commands;
 
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -150,7 +149,7 @@ namespace HurryUpHaul.IntegrationTests
                 result.Should().NotBeNull();
                 result.Errors.Should().HaveCount(1);
 
-                result.Errors.First().Should().Be("Managers Ids must not contain more than 10 values");
+                result.Errors.First().Should().Be("Managers Ids must not contain more than 10 values.");
             }
         }
 

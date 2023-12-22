@@ -14,7 +14,7 @@ namespace HurryUpHaul.Api.Extensions
                 .NotEmpty()
                 .MaximumLength(256)
                 .Must(x => x == null || x.All(c => AllowedUserNameCharacters.Contains(c)))
-                .WithMessage($"Username must only contain the following characters: {AllowedUserNameCharacters}");
+                .WithMessage($"Username must only contain the following characters: {AllowedUserNameCharacters}.");
         }
 
         public static void RuleForPassword<T>(this AbstractValidator<T> validator, Expression<Func<T, string>> expression)

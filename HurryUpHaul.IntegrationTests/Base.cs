@@ -1,6 +1,7 @@
 using Bogus;
 
 using HurryUpHaul.Contracts.Http;
+using HurryUpHaul.Domain.Constants;
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -44,7 +45,7 @@ namespace HurryUpHaul.IntegrationTests
             }
         }
 
-        private protected async Task<UserInfo> CreateTestUser(string role = "customer")
+        private protected async Task<UserInfo> CreateTestUser(string role = Roles.User)
         {
             // 1. registration
             var registrationRequest = new RegisterUserRequest

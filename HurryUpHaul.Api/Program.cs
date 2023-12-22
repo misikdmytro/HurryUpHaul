@@ -71,7 +71,7 @@ builder.Services.AddApiServices();
 
 builder.Services
     .AddAuthorizationBuilder()
-    .AddPolicy(AuthorizePolicies.Customer, policy => policy.RequireClaim(ClaimTypes.Role, Roles.Customer))
+    .AddPolicy(AuthorizePolicies.User, policy => policy.RequireClaim(ClaimTypes.Role, Roles.User))
     .AddPolicy(AuthorizePolicies.Admin, policy => policy.RequireClaim(ClaimTypes.Role, Roles.Admin));
 
 builder.Services

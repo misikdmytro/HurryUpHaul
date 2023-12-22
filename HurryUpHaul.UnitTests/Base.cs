@@ -1,7 +1,9 @@
+using AutoMapper;
+
 using Bogus;
 
-
 using HurryUpHaul.Domain.Databases;
+using HurryUpHaul.Domain.Profiles;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -9,8 +11,10 @@ namespace HurryUpHaul.UnitTests.Commands
 {
     public class Base : IAsyncDisposable
     {
-        private protected readonly AppDbContext _appDbContext;
         protected readonly Faker _faker;
+
+        private protected readonly AppDbContext _appDbContext;
+        private protected readonly IMapper _mapper;
 
         public Base()
         {
@@ -19,6 +23,7 @@ namespace HurryUpHaul.UnitTests.Commands
                 .Options;
 
             _appDbContext = new AppDbContext(options);
+            _mapper = new MapperConfiguration(cfg => cfg.AddProfile<AppProfile>()).CreateMapper();
 
             _faker = new Faker();
         }

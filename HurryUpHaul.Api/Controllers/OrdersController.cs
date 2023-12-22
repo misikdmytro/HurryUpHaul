@@ -2,6 +2,7 @@ using System.Net.Mime;
 
 using FluentValidation;
 
+using HurryUpHaul.Api.Constants;
 using HurryUpHaul.Api.Extensions;
 using HurryUpHaul.Contracts.Http;
 using HurryUpHaul.Domain.Commands;
@@ -50,7 +51,7 @@ namespace HurryUpHaul.Api.Controllers
         /// <response code="403">Forbidden</response>
         /// <response code="500">Internal server error</response>
         [HttpPost]
-        [Authorize(Policy = "Customer")]
+        [Authorize(Policy = AuthorizePolicies.User)]
         [ProducesResponseType(typeof(CreateOrderResponse), 201)]
         [ProducesResponseType(typeof(ErrorResponse), 400)]
         [ProducesResponseType(typeof(ErrorResponse), 401)]

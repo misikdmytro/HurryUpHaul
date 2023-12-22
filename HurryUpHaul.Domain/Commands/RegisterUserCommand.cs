@@ -51,12 +51,12 @@ namespace HurryUpHaul.Domain.Commands
                 };
             }
 
-            if (!await _roleManager.RoleExistsAsync(Roles.Customer))
+            if (!await _roleManager.RoleExistsAsync(Roles.User))
             {
-                await _roleManager.CreateAsync(new IdentityRole(Roles.Customer));
+                await _roleManager.CreateAsync(new IdentityRole(Roles.User));
             }
 
-            result = await _userManager.AddToRoleAsync(user, Roles.Customer);
+            result = await _userManager.AddToRoleAsync(user, Roles.User);
 
             return new RegisterUserCommandResult
             {

@@ -17,6 +17,8 @@ jobs:
           dotnet-version: ${{ matrix.dotnet-version }}
       - name: Display dotnet version
         run: dotnet --version
+      - name: Format Code
+        run: dotnet format --verify-no-changes
       - name: Restore dependencies
         run: dotnet restore
       - name: Build

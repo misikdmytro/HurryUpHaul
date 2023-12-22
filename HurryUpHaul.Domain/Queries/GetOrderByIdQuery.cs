@@ -12,19 +12,19 @@ using Microsoft.Extensions.Logging;
 
 namespace HurryUpHaul.Domain.Queries
 {
-    public class GetOrderByIdQuery : IRequest<GetOrderByIdQueryResponse>
+    public class GetOrderByIdQuery : IRequest<GetOrderByIdQueryResult>
     {
         public required string Requester { get; init; }
         public required string[] RequesterRoles { get; init; }
         public required string OrderId { get; init; }
     }
 
-    public class GetOrderByIdQueryResponse
+    public class GetOrderByIdQueryResult
     {
         public Order Order { get; init; }
     }
 
-    internal class GetOrderByIdQueryHandler : BaseRequestHandler<GetOrderByIdQuery, GetOrderByIdQueryResponse>
+    internal class GetOrderByIdQueryHandler : BaseRequestHandler<GetOrderByIdQuery, GetOrderByIdQueryResult>
     {
         private readonly AppDbContext _dbContext;
         private readonly IMapper _mapper;
@@ -37,7 +37,7 @@ namespace HurryUpHaul.Domain.Queries
             _mapper = mapper;
         }
 
-        protected override async Task<GetOrderByIdQueryResponse> HandleInternal(GetOrderByIdQuery request, CancellationToken cancellationToken)
+        protected override async Task<GetOrderByIdQueryResult> HandleInternal(GetOrderByIdQuery request, CancellationToken cancellationToken)
         {
             var order = await _dbContext.Orders
                 .Include(o => o.Restaurant)
@@ -48,8 +48,8 @@ namespace HurryUpHaul.Domain.Queries
                 (order.CreatedBy != request.Requester &&
                 order.Restaurant.Managers.Any(m => m.UserName == request.Requester) != true &&
                 request.RequesterRoles?.Contains(Roles.Admin) != true)
-                ? new GetOrderByIdQueryResponse()
-                : new GetOrderByIdQueryResponse
+                ? new GetOrderByIdQueryResult()
+                : new GetOrderByIdQueryResult
                 {
                     Order = _mapper.Map<Order>(order)
                 };

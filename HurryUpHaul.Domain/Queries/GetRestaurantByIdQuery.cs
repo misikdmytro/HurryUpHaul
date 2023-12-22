@@ -12,19 +12,19 @@ using Microsoft.Extensions.Logging;
 
 namespace HurryUpHaul.Domain.Queries
 {
-    public class GetRestaurantByIdQuery : IRequest<GetRestaurantByIdQueryResponse>
+    public class GetRestaurantByIdQuery : IRequest<GetRestaurantByIdQueryResult>
     {
         public string Requester { get; init; }
         public string[] RequesterRoles { get; init; }
         public string RestaurantId { get; init; }
     }
 
-    public class GetRestaurantByIdQueryResponse
+    public class GetRestaurantByIdQueryResult
     {
         public Restaurant Restaurant { get; init; }
     }
 
-    internal class GetRestaurantByIdQueryHandler : BaseRequestHandler<GetRestaurantByIdQuery, GetRestaurantByIdQueryResponse>
+    internal class GetRestaurantByIdQueryHandler : BaseRequestHandler<GetRestaurantByIdQuery, GetRestaurantByIdQueryResult>
     {
         private readonly AppDbContext _dbContext;
         private readonly IMapper _mapper;
@@ -37,7 +37,7 @@ namespace HurryUpHaul.Domain.Queries
             _mapper = mapper;
         }
 
-        protected override async Task<GetRestaurantByIdQueryResponse> HandleInternal(GetRestaurantByIdQuery request, CancellationToken cancellationToken)
+        protected override async Task<GetRestaurantByIdQueryResult> HandleInternal(GetRestaurantByIdQuery request, CancellationToken cancellationToken)
         {
             var restaurant = await _dbContext.Restaurants
                 .Include(r => r.Managers)
@@ -45,7 +45,7 @@ namespace HurryUpHaul.Domain.Queries
 
             if (restaurant == null)
             {
-                return new GetRestaurantByIdQueryResponse();
+                return new GetRestaurantByIdQueryResult();
             }
 
             if (request.RequesterRoles?.Contains(Roles.Admin) != true && restaurant?.Managers.Any(m => m.UserName == request.Requester) != true)
@@ -55,7 +55,7 @@ namespace HurryUpHaul.Domain.Queries
                 restaurant.CreatedAt = default;
             }
 
-            return new GetRestaurantByIdQueryResponse
+            return new GetRestaurantByIdQueryResult
             {
                 Restaurant = _mapper.Map<Restaurant>(restaurant)
             };
