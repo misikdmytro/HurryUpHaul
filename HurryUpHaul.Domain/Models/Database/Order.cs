@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace HurryUpHaul.Domain.Models.Database
 {
     [Index(nameof(CreatedBy))]
+    [Index(nameof(CreatedAt))]
     internal class Order
     {
         [Key]

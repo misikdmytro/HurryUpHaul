@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HurryUpHaul.Domain.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20231221151127_Initial")]
+    [Migration("20231222110906_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -54,6 +54,8 @@ namespace HurryUpHaul.Domain.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
 
                     b.HasIndex("CreatedBy");
 

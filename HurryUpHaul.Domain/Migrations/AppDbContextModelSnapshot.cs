@@ -52,6 +52,8 @@ namespace HurryUpHaul.Domain.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedAt");
+
                     b.HasIndex("CreatedBy");
 
                     b.HasIndex("RestaurantId");

@@ -1,8 +1,11 @@
 using FluentValidation;
 
+using HurryUpHaul.Api.Helpers;
 using HurryUpHaul.Api.Validators;
 
 using HurryUpHaul.Contracts.Http;
+
+using Microsoft.AspNetCore.Authorization;
 
 namespace HurryUpHaul.Api
 {
@@ -11,6 +14,7 @@ namespace HurryUpHaul.Api
         public static IServiceCollection AddApiServices(this IServiceCollection services)
         {
             return services
+                .AddSingleton<IAuthorizationMiddlewareResultHandler, AppAuthorizationMiddlewareResultHandler>()
                 .AddScoped<IValidator<CreateOrderRequest>, CreateOrderRequestValidator>()
                 .AddScoped<IValidator<RegisterUserRequest>, RegisterUserRequestValidator>()
                 .AddScoped<IValidator<AuthenticateUserRequest>, AuthenticateUserRequestValidator>()

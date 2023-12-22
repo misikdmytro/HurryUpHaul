@@ -25,7 +25,7 @@ namespace HurryUpHaul.Domain.Commands
     {
         public bool Success { get; init; }
         public string Token { get; init; }
-        public IEnumerable<string> Errors { get; init; }
+        public string[] Errors { get; init; }
     }
 
     internal class AuthenticateUserCommandHandler : BaseRequestHandler<AuthenticateUserCommand, AuthenticateUserCommandResult>

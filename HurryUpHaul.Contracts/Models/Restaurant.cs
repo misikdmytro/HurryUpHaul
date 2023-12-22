@@ -5,6 +5,6 @@ namespace HurryUpHaul.Contracts.Models
         public string Id { get; init; }
         public string Name { get; init; }
         public DateTimeOffset? CreatedAt { get; init; }
-        public string[] Managers { get; init; }
+        public IEnumerable<string> Managers { get; init; }
     }
 }

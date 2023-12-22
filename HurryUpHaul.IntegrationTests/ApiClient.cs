@@ -11,6 +11,7 @@ namespace HurryUpHaul.IntegrationTests
         Task<CreateRestaurantResponse> CreateRestaurant(CreateRestaurantRequest request, string token);
         Task<GetRestaurantResponse> GetRestaurant(string restaurantId);
         Task<GetRestaurantResponse> GetRestaurant(string restaurantId, string token);
+        Task<GetRestaurantOrdersResponse> GetRestaurantOrders(string restaurantId, int pageSize, int pageNumber, string token);
         Task<CreateOrderResponse> CreateOrder(CreateOrderRequest request);
         Task<CreateOrderResponse> CreateOrder(CreateOrderRequest request, string token);
         Task<GetOrderResponse> GetOrder(string orderId, string token);
@@ -108,6 +109,21 @@ namespace HurryUpHaul.IntegrationTests
                 .WithOAuthBearerToken(token)
                 .AllowHttpStatus(200)
                 .GetJsonAsync<GetRestaurantResponse>();
+        }
+
+        public Task<GetRestaurantOrdersResponse> GetRestaurantOrders(string restaurantId, int pageSize, int pageNumber, string token)
+        {
+            return _client
+                .Request()
+                .AppendPathSegment("api")
+                .AppendPathSegment("restaurants")
+                .AppendPathSegment(restaurantId)
+                .AppendPathSegment("orders")
+                .SetQueryParam("pageSize", pageSize)
+                .SetQueryParam("pageNumber", pageNumber)
+                .WithOAuthBearerToken(token)
+                .AllowHttpStatus(200)
+                .GetJsonAsync<GetRestaurantOrdersResponse>();
         }
 
         public Task<GetOrderResponse> GetOrder(string orderId, string token)

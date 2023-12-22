@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Mime;
 using System.Security.Claims;
 
@@ -127,6 +128,88 @@ namespace HurryUpHaul.Api.Controllers
                 {
                     Restaurant = result.Restaurant
                 });
+        }
+
+        /// <summary>
+        /// Returns a list of orders for a restaurant
+        /// </summary>
+        /// <param name="id">Restaurant ID</param>
+        /// <param name="pageSize">Page size</param>
+        /// <param name="pageNumber">Page number</param> 
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>List of orders</returns>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        /// GET /api/restaurants/{id}/orders?pageSize=10&amp;pageNumber=1
+        /// 
+        /// </remarks>
+        /// <response code="200">Orders found</response>
+        /// <response code="401">Unauthorized</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Restaurant not found</response>
+        /// <response code="500">Internal server error</response>
+        [HttpGet("{id}/orders")]
+        [ProducesResponseType(typeof(GetRestaurantOrdersResponse), 200)]
+        [ProducesResponseType(typeof(ErrorResponse), 401)]
+        [ProducesResponseType(typeof(ErrorResponse), 403)]
+        [ProducesResponseType(typeof(ErrorResponse), 404)]
+        [ProducesResponseType(typeof(ErrorResponse), 500)]
+        public async Task<IActionResult> GetRestaurantOrders([FromRoute] string id,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] int pageNumber = 1,
+            CancellationToken cancellationToken = default)
+        {
+            if (pageSize < 1 || pageNumber < 1 || pageSize > 1000)
+            {
+                List<string> errors = [];
+                if (pageSize < 1)
+                {
+                    errors.Add("Page size must be greater than 0.");
+                }
+
+                if (pageNumber < 1)
+                {
+                    errors.Add("Page number must be greater than 0.");
+                }
+
+                if (pageSize > 1000)
+                {
+                    errors.Add("Page size must be less than or equal to 1000.");
+                }
+
+                return BadRequest(new ErrorResponse
+                {
+                    Errors = errors
+                });
+            }
+
+            var query = new GetRestaurantOrdersQuery
+            {
+                Requester = User?.Identity?.Name,
+                RequesterRoles = User?.Claims?.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToArray(),
+                RestaurantId = id,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            var result = await _mediator.Send(query, cancellationToken);
+
+            return result.Result switch
+            {
+                GetRestaurantOrdersQueryResultType.RestaurantNotFound => (IActionResult)NotFound(new ErrorResponse
+                {
+                    Errors = result.Errors
+                }),
+                GetRestaurantOrdersQueryResultType.NoAccess => StatusCode((int)HttpStatusCode.Forbidden, new ErrorResponse
+                {
+                    Errors = result.Errors
+                }),
+                _ => Ok(new GetRestaurantOrdersResponse
+                {
+                    Orders = result.Orders
+                })
+            };
         }
     }
 }

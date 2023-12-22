@@ -10,14 +10,14 @@ namespace HurryUpHaul.Domain.Commands
     public class AdminUpdateUserCommand : IRequest<AdminUpdateUserCommandResult>
     {
         public required string Username { get; init; }
-        public string[] RoleToAdd { get; init; } = [];
-        public string[] RoleToRemove { get; init; } = [];
+        public string[] RoleToAdd { get; init; }
+        public string[] RoleToRemove { get; init; }
     }
 
     public class AdminUpdateUserCommandResult
     {
         public bool Success { get; init; }
-        public IEnumerable<string> Errors { get; init; }
+        public string[] Errors { get; init; }
     }
 
     internal class AdminUpdateUserCommandHandler : BaseRequestHandler<AdminUpdateUserCommand, AdminUpdateUserCommandResult>
@@ -66,7 +66,7 @@ namespace HurryUpHaul.Domain.Commands
                     return new AdminUpdateUserCommandResult
                     {
                         Success = false,
-                        Errors = result.Errors.Select(x => x.Description)
+                        Errors = result.Errors.Select(x => x.Description).ToArray()
                     };
                 }
             }
@@ -79,7 +79,7 @@ namespace HurryUpHaul.Domain.Commands
                     return new AdminUpdateUserCommandResult
                     {
                         Success = false,
-                        Errors = result.Errors.Select(x => x.Description)
+                        Errors = result.Errors.Select(x => x.Description).ToArray()
                     };
                 }
             }

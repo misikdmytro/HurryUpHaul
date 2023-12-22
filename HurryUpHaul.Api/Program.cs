@@ -6,6 +6,7 @@ using System.Text;
 using HurryUpHaul.Api;
 using HurryUpHaul.Api.Constants;
 using HurryUpHaul.Api.Filters;
+using HurryUpHaul.Api.Helpers;
 using HurryUpHaul.Domain;
 using HurryUpHaul.Domain.Constants;
 
@@ -95,6 +96,11 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig["Secret"])),
             RoleClaimType = ClaimNames.Role,
             NameClaimType = JwtRegisteredClaimNames.Name
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = JwtBearerHelpers.OnChallenge
         };
     });
 

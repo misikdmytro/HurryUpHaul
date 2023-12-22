@@ -260,6 +260,11 @@ namespace HurryUpHaul.Domain.Migrations
                 column: "RestaurantId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Orders_CreatedAt",
+                table: "Orders",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Orders_CreatedBy",
                 table: "Orders",
                 column: "CreatedBy");

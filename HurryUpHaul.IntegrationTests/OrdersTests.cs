@@ -236,6 +236,12 @@ namespace HurryUpHaul.IntegrationTests
             catch (FlurlHttpException ex)
             {
                 ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.Unauthorized);
+
+                var result = await ex.GetResponseJsonAsync<ErrorResponse>();
+
+                result.Should().NotBeNull();
+                result.Errors.Should().HaveCount(1);
+                result.Errors.First().Should().Be("You are not authorized to access this resource.");
             }
         }
 
