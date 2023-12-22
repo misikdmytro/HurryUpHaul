@@ -56,6 +56,7 @@ namespace HurryUpHaul.Domain.Queries
                     .OrderByDescending(o => o.CreatedAt)
                     .Skip((request.PageNumber - 1) * request.PageSize)
                     .Take(request.PageSize))
+                .AsSplitQuery()
                 .SingleOrDefaultAsync(x => x.Id == request.RestaurantId, cancellationToken);
 
             return restaurant == null
