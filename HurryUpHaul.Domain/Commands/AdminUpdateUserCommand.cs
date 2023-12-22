@@ -14,9 +14,16 @@ namespace HurryUpHaul.Domain.Commands
         public string[] RoleToRemove { get; init; }
     }
 
+    public enum AdminUpdateUserCommandResultType
+    {
+        Success,
+        UserNotFound,
+        UpdateFailed
+    }
+
     public class AdminUpdateUserCommandResult
     {
-        public bool Success { get; init; }
+        public AdminUpdateUserCommandResultType Result { get; init; }
         public string[] Errors { get; init; }
     }
 
@@ -40,7 +47,7 @@ namespace HurryUpHaul.Domain.Commands
             {
                 return new AdminUpdateUserCommandResult
                 {
-                    Success = false,
+                    Result = AdminUpdateUserCommandResultType.UserNotFound,
                     Errors = ["User not found."]
                 };
             }
@@ -65,7 +72,7 @@ namespace HurryUpHaul.Domain.Commands
                 {
                     return new AdminUpdateUserCommandResult
                     {
-                        Success = false,
+                        Result = AdminUpdateUserCommandResultType.UpdateFailed,
                         Errors = result.Errors.Select(x => x.Description).ToArray()
                     };
                 }
@@ -78,7 +85,7 @@ namespace HurryUpHaul.Domain.Commands
                 {
                     return new AdminUpdateUserCommandResult
                     {
-                        Success = false,
+                        Result = AdminUpdateUserCommandResultType.UpdateFailed,
                         Errors = result.Errors.Select(x => x.Description).ToArray()
                     };
                 }
@@ -86,7 +93,7 @@ namespace HurryUpHaul.Domain.Commands
 
             return new AdminUpdateUserCommandResult
             {
-                Success = true
+                Result = AdminUpdateUserCommandResultType.Success
             };
         }
     }

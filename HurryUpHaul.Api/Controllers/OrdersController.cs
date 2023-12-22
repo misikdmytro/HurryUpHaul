@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Mime;
 
 using FluentValidation;
@@ -77,15 +78,18 @@ namespace HurryUpHaul.Api.Controllers
 
             var result = await _mediator.Send(command, cancellationToken);
 
-            return result.Errors?.Length > 0
-                ? BadRequest(new ErrorResponse
-                {
-                    Errors = result.Errors
-                })
-                : Created($"/api/orders/{result.OrderId}", new CreateOrderResponse
+            return result.Result switch
+            {
+                CreateOrderCommandResultType.Success => Created($"/api/orders/{result.OrderId}", new CreateOrderResponse
                 {
                     OrderId = result.OrderId
-                });
+                }),
+                CreateOrderCommandResultType.RestaurantNotFound => BadRequest(new ErrorResponse
+                {
+                    Errors = result.Errors
+                }),
+                _ => throw new ArgumentOutOfRangeException(nameof(request), result.Result, "Unexpected result type.")
+            };
         }
 
         /// <summary>
@@ -116,21 +120,26 @@ namespace HurryUpHaul.Api.Controllers
             var query = new GetOrderByIdQuery
             {
                 OrderId = id,
-                Requester = User.Identity.Name,
-                RequesterRoles = User.Claims.Roles().ToArray()
             };
 
             var result = await _mediator.Send(query, cancellationToken);
 
-            return result.Order == null
+            return result.Result == GetOrderByIdQueryResultType.OrderNotFound
                 ? NotFound(new ErrorResponse
                 {
-                    Errors = new[] { $"Order with ID '{id}' not found." }
+                    Errors = result.Errors
                 })
-                : Ok(new GetOrderResponse
-                {
-                    Order = result.Order
-                });
+                : result.Result == GetOrderByIdQueryResultType.Success
+                ? User.CanSeeOrder(result.Order, result.RestaurantManagers)
+                    ? Ok(new GetOrderResponse
+                    {
+                        Order = result.Order
+                    })
+                    : (IActionResult)StatusCode((int)HttpStatusCode.Forbidden, new ErrorResponse
+                    {
+                        Errors = ["You are not authorized to view this order."]
+                    })
+                : throw new ArgumentOutOfRangeException(nameof(id), result.Result, "Unexpected result type.");
         }
     }
 }

@@ -1,7 +1,6 @@
 using AutoMapper;
 
 using HurryUpHaul.Contracts.Models;
-using HurryUpHaul.Domain.Constants;
 using HurryUpHaul.Domain.Databases;
 using HurryUpHaul.Domain.Handlers;
 
@@ -14,14 +13,21 @@ namespace HurryUpHaul.Domain.Queries
 {
     public class GetOrderByIdQuery : IRequest<GetOrderByIdQueryResult>
     {
-        public required string Requester { get; init; }
-        public required string[] RequesterRoles { get; init; }
         public required string OrderId { get; init; }
+    }
+
+    public enum GetOrderByIdQueryResultType
+    {
+        Success,
+        OrderNotFound
     }
 
     public class GetOrderByIdQueryResult
     {
+        public GetOrderByIdQueryResultType Result { get; init; }
         public Order Order { get; init; }
+        public string[] RestaurantManagers { get; init; }
+        public string[] Errors { get; init; }
     }
 
     internal class GetOrderByIdQueryHandler : BaseRequestHandler<GetOrderByIdQuery, GetOrderByIdQueryResult>
@@ -44,14 +50,17 @@ namespace HurryUpHaul.Domain.Queries
                 .ThenInclude(r => r.Managers)
                 .SingleOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
 
-            return order == null ||
-                (order.CreatedBy != request.Requester &&
-                order.Restaurant.Managers.Any(m => m.UserName == request.Requester) != true &&
-                request.RequesterRoles?.Contains(Roles.Admin) != true)
-                ? new GetOrderByIdQueryResult()
+            return order == null
+                ? new GetOrderByIdQueryResult
+                {
+                    Result = GetOrderByIdQueryResultType.OrderNotFound,
+                    Errors = [$"Order with ID '{request.OrderId}' not found."]
+                }
                 : new GetOrderByIdQueryResult
                 {
-                    Order = _mapper.Map<Order>(order)
+                    Result = GetOrderByIdQueryResultType.Success,
+                    Order = _mapper.Map<Order>(order),
+                    RestaurantManagers = order.Restaurant.Managers.Select(m => m.UserName).ToArray()
                 };
         }
     }

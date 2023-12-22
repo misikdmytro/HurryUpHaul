@@ -1,10 +1,11 @@
 using System.Net;
 using System.Net.Mime;
-using System.Security.Claims;
 
 using FluentValidation;
 
+using HurryUpHaul.Api.Extensions;
 using HurryUpHaul.Contracts.Http;
+using HurryUpHaul.Contracts.Models;
 using HurryUpHaul.Domain.Commands;
 using HurryUpHaul.Domain.Queries;
 
@@ -77,12 +78,18 @@ namespace HurryUpHaul.Api.Controllers
 
             var result = await _mediator.Send(command, cancellationToken);
 
-            return result.Errors?.Length > 0
-                ? BadRequest(result.Errors)
-                : Created($"/api/restaurants/{result.RestaurantId}", new CreateRestaurantResponse
+            return result.Result switch
+            {
+                CreateRestaurantCommandResultType.ManagersNotFound => BadRequest(new ErrorResponse
+                {
+                    Errors = result.Errors
+                }),
+                CreateRestaurantCommandResultType.Success => Created($"/api/restaurants/{result.RestaurantId}", new CreateRestaurantResponse
                 {
                     RestaurantId = result.RestaurantId
-                });
+                }),
+                _ => throw new ArgumentOutOfRangeException(nameof(request), result.Result, "Unexpected result type.")
+            };
         }
 
         /// <summary>
@@ -112,22 +119,31 @@ namespace HurryUpHaul.Api.Controllers
         {
             var query = new GetRestaurantByIdQuery
             {
-                Requester = User?.Identity?.Name,
-                RequesterRoles = User?.Claims?.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToArray(),
                 RestaurantId = id
             };
 
             var result = await _mediator.Send(query, cancellationToken);
 
-            return result.Restaurant == null
+            return result.Result == GetRestaurantByIdQueryResultType.RestaurantNotFound
                 ? NotFound(new ErrorResponse
                 {
-                    Errors = new[] { $"Restaurant with ID '{id}' not found." }
+                    Errors = result.Errors
                 })
-                : Ok(new GetRestaurantResponse
-                {
-                    Restaurant = result.Restaurant
-                });
+                : result.Result == GetRestaurantByIdQueryResultType.Success
+                ? User.CanSeeRestaurantDetails(result.Restaurant)
+                    ? Ok(new GetRestaurantResponse
+                    {
+                        Restaurant = result.Restaurant
+                    })
+                    : Ok(new GetRestaurantResponse
+                    {
+                        Restaurant = new Restaurant
+                        {
+                            Id = result.Restaurant.Id,
+                            Name = result.Restaurant.Name
+                        }
+                    })
+                : throw new ArgumentOutOfRangeException(nameof(id), result.Result, "Unexpected result type.");
         }
 
         /// <summary>
@@ -186,8 +202,6 @@ namespace HurryUpHaul.Api.Controllers
 
             var query = new GetRestaurantOrdersQuery
             {
-                Requester = User?.Identity?.Name,
-                RequesterRoles = User?.Claims?.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToArray(),
                 RestaurantId = id,
                 PageNumber = pageNumber,
                 PageSize = pageSize
@@ -195,21 +209,22 @@ namespace HurryUpHaul.Api.Controllers
 
             var result = await _mediator.Send(query, cancellationToken);
 
-            return result.Result switch
-            {
-                GetRestaurantOrdersQueryResultType.RestaurantNotFound => (IActionResult)NotFound(new ErrorResponse
+            return result.Result == GetRestaurantOrdersQueryResultType.RestaurantNotFound
+                ? NotFound(new ErrorResponse
                 {
                     Errors = result.Errors
-                }),
-                GetRestaurantOrdersQueryResultType.NoAccess => StatusCode((int)HttpStatusCode.Forbidden, new ErrorResponse
-                {
-                    Errors = result.Errors
-                }),
-                _ => Ok(new GetRestaurantOrdersResponse
-                {
-                    Orders = result.Orders
                 })
-            };
+                : result.Result == GetRestaurantOrdersQueryResultType.Success
+                ? User.CanSeeRestaurantDetails(result.Restaurant)
+                    ? Ok(new GetRestaurantOrdersResponse
+                    {
+                        Orders = result.Orders
+                    })
+                    : (IActionResult)StatusCode((int)HttpStatusCode.Forbidden, new ErrorResponse
+                    {
+                        Errors = ["You are not authorized to view this restaurant's orders."]
+                    })
+                : throw new ArgumentOutOfRangeException(nameof(id), result.Result, "Unexpected result type.");
         }
     }
 }

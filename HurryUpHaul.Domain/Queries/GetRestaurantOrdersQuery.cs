@@ -1,7 +1,6 @@
 using AutoMapper;
 
 using HurryUpHaul.Contracts.Models;
-using HurryUpHaul.Domain.Constants;
 using HurryUpHaul.Domain.Databases;
 using HurryUpHaul.Domain.Handlers;
 
@@ -17,20 +16,18 @@ namespace HurryUpHaul.Domain.Queries
         public required string RestaurantId { get; init; }
         public required int PageSize { get; init; }
         public required int PageNumber { get; init; }
-        public required string Requester { get; init; }
-        public required string[] RequesterRoles { get; init; }
     }
 
     public enum GetRestaurantOrdersQueryResultType
     {
         Success,
         RestaurantNotFound,
-        NoAccess
     }
 
     public class GetRestaurantOrdersQueryResult
     {
         public GetRestaurantOrdersQueryResultType Result { get; init; }
+        public Restaurant Restaurant { get; init; }
         public IEnumerable<Order> Orders { get; init; }
         public string[] Errors { get; set; }
     }
@@ -65,16 +62,10 @@ namespace HurryUpHaul.Domain.Queries
                     Result = GetRestaurantOrdersQueryResultType.RestaurantNotFound,
                     Errors = [$"Restaurant with ID '{request.RestaurantId}' not found."]
                 }
-                : restaurant.Managers.Any(m => m.UserName == request.Requester) != true &&
-                request.RequesterRoles?.Contains(Roles.Admin) != true
-                ? new GetRestaurantOrdersQueryResult
-                {
-                    Result = GetRestaurantOrdersQueryResultType.NoAccess,
-                    Errors = ["You are not authorized to view this restaurant's orders."]
-                }
                 : new GetRestaurantOrdersQueryResult
                 {
                     Result = GetRestaurantOrdersQueryResultType.Success,
+                    Restaurant = _mapper.Map<Restaurant>(restaurant),
                     Orders = _mapper.Map<IEnumerable<Order>>(restaurant.Orders)
                 };
         }

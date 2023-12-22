@@ -14,10 +14,16 @@ namespace HurryUpHaul.Domain.Commands
         public required string Password { get; init; }
     }
 
+    public enum RegisterUserCommandResultType
+    {
+        Success,
+        RegistrationFailed
+    }
+
     public class RegisterUserCommandResult
     {
+        public RegisterUserCommandResultType Result { get; init; }
         public string UserId { get; init; }
-        public bool Success { get; init; }
         public string[] Errors { get; init; }
     }
 
@@ -46,7 +52,7 @@ namespace HurryUpHaul.Domain.Commands
             {
                 return new RegisterUserCommandResult
                 {
-                    Success = false,
+                    Result = RegisterUserCommandResultType.RegistrationFailed,
                     Errors = result.Errors.Select(x => x.Description).ToArray()
                 };
             }
@@ -60,8 +66,8 @@ namespace HurryUpHaul.Domain.Commands
 
             return new RegisterUserCommandResult
             {
+                Result = RegisterUserCommandResultType.Success,
                 UserId = user.Id,
-                Success = result.Succeeded,
                 Errors = result.Errors?.Select(x => x.Description).ToArray()
             };
         }

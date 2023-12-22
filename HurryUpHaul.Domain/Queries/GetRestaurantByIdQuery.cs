@@ -1,7 +1,6 @@
 using AutoMapper;
 
 using HurryUpHaul.Contracts.Models;
-using HurryUpHaul.Domain.Constants;
 using HurryUpHaul.Domain.Databases;
 using HurryUpHaul.Domain.Handlers;
 
@@ -14,14 +13,20 @@ namespace HurryUpHaul.Domain.Queries
 {
     public class GetRestaurantByIdQuery : IRequest<GetRestaurantByIdQueryResult>
     {
-        public string Requester { get; init; }
-        public string[] RequesterRoles { get; init; }
         public string RestaurantId { get; init; }
+    }
+
+    public enum GetRestaurantByIdQueryResultType
+    {
+        Success,
+        RestaurantNotFound
     }
 
     public class GetRestaurantByIdQueryResult
     {
+        public GetRestaurantByIdQueryResultType Result { get; init; }
         public Restaurant Restaurant { get; init; }
+        public string[] Errors { get; set; }
     }
 
     internal class GetRestaurantByIdQueryHandler : BaseRequestHandler<GetRestaurantByIdQuery, GetRestaurantByIdQueryResult>
@@ -43,22 +48,17 @@ namespace HurryUpHaul.Domain.Queries
                 .Include(r => r.Managers)
                 .SingleOrDefaultAsync(r => r.Id == request.RestaurantId, cancellationToken);
 
-            if (restaurant == null)
-            {
-                return new GetRestaurantByIdQueryResult();
-            }
-
-            if (request.RequesterRoles?.Contains(Roles.Admin) != true && restaurant?.Managers.Any(m => m.UserName == request.Requester) != true)
-            {
-                // do not return all details if the user is not an admin or a manager of the restaurant
-                restaurant.Managers = null;
-                restaurant.CreatedAt = default;
-            }
-
-            return new GetRestaurantByIdQueryResult
-            {
-                Restaurant = _mapper.Map<Restaurant>(restaurant)
-            };
+            return restaurant == null
+                ? new GetRestaurantByIdQueryResult
+                {
+                    Result = GetRestaurantByIdQueryResultType.RestaurantNotFound,
+                    Errors = [$"Restaurant with ID '{request.RestaurantId}' not found."]
+                }
+                : new GetRestaurantByIdQueryResult
+                {
+                    Result = GetRestaurantByIdQueryResultType.Success,
+                    Restaurant = _mapper.Map<Restaurant>(restaurant)
+                };
         }
     }
 }

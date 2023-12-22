@@ -76,15 +76,19 @@ namespace HurryUpHaul.Api.Controllers
             };
 
             var result = await _mediator.Send(command, cancellationToken);
-            return !result.Success
-                ? BadRequest(new ErrorResponse
+
+            return result.Result switch
+            {
+                RegisterUserCommandResultType.RegistrationFailed => BadRequest(new ErrorResponse
                 {
                     Errors = result.Errors
-                })
-                : Ok(new RegisterUserResponse
+                }),
+                RegisterUserCommandResultType.Success => Ok(new RegisterUserResponse
                 {
                     UserId = result.UserId
-                });
+                }),
+                _ => throw new ArgumentOutOfRangeException(nameof(request), result.Result, "Unexpected result type.")
+            };
         }
 
         /// <summary>
@@ -128,15 +132,19 @@ namespace HurryUpHaul.Api.Controllers
             };
 
             var result = await _mediator.Send(command, cancellationToken);
-            return !result.Success
-                ? BadRequest(new ErrorResponse
+
+            return result.Result switch
+            {
+                AuthenticateUserCommandResultType.InvalidUsernameOrPassword => BadRequest(new ErrorResponse
                 {
                     Errors = result.Errors
-                })
-                : Ok(new AuthenticateUserResponse
+                }),
+                AuthenticateUserCommandResultType.Success => Ok(new AuthenticateUserResponse
                 {
                     Token = result.Token
-                });
+                }),
+                _ => throw new ArgumentOutOfRangeException(nameof(request), result.Result, "Unexpected result type.")
+            };
         }
 
         /// <summary>
@@ -211,12 +219,16 @@ namespace HurryUpHaul.Api.Controllers
             };
 
             var result = await _mediator.Send(command, cancellationToken);
-            return !result.Success
-                ? BadRequest(new ErrorResponse
+
+            return result.Result switch
+            {
+                AdminUpdateUserCommandResultType.UpdateFailed or AdminUpdateUserCommandResultType.UserNotFound => BadRequest(new ErrorResponse
                 {
                     Errors = result.Errors
-                })
-                : Ok();
+                }),
+                AdminUpdateUserCommandResultType.Success => Ok(),
+                _ => throw new ArgumentOutOfRangeException(nameof(request), result.Result, "Unexpected result type.")
+            };
         }
     }
 }

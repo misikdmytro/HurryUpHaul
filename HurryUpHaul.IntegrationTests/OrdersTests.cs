@@ -92,13 +92,13 @@ namespace HurryUpHaul.IntegrationTests
             }
             catch (FlurlHttpException ex)
             {
-                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.Forbidden);
 
                 var responseContent = await ex.GetResponseJsonAsync<ErrorResponse>();
 
                 responseContent.Should().NotBeNull();
                 responseContent.Errors.Should().HaveCount(1);
-                responseContent.Errors.First().Should().Be($"Order with ID '{creadeOrderResult.OrderId}' not found.");
+                responseContent.Errors.First().Should().Be("You are not authorized to view this order.");
             }
         }
 

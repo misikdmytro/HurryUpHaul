@@ -17,8 +17,15 @@ namespace HurryUpHaul.Domain.Commands
         public string[] ManagersIds { get; init; }
     }
 
+    public enum CreateRestaurantCommandResultType
+    {
+        Success,
+        ManagersNotFound,
+    }
+
     public class CreateRestaurantCommandResult
     {
+        public CreateRestaurantCommandResultType Result { get; init; }
         public string RestaurantId { get; init; }
         public string[] Errors { get; init; }
     }
@@ -46,6 +53,7 @@ namespace HurryUpHaul.Domain.Commands
             {
                 return new CreateRestaurantCommandResult
                 {
+                    Result = CreateRestaurantCommandResultType.ManagersNotFound,
                     Errors = ["One or more managers were not found."]
                 };
             }
@@ -64,6 +72,7 @@ namespace HurryUpHaul.Domain.Commands
 
             return new CreateRestaurantCommandResult
             {
+                Result = CreateRestaurantCommandResultType.Success,
                 RestaurantId = restaurant.Id
             };
         }

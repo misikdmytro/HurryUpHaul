@@ -19,8 +19,15 @@ namespace HurryUpHaul.Domain.Commands
         public required string OrderDetails { get; init; }
     }
 
+    public enum CreateOrderCommandResultType
+    {
+        Success,
+        RestaurantNotFound,
+    }
+
     public class CreateOrderCommandResult
     {
+        public CreateOrderCommandResultType Result { get; init; }
         public string OrderId { get; init; }
         public string[] Errors { get; init; }
     }
@@ -60,6 +67,7 @@ namespace HurryUpHaul.Domain.Commands
 
                 return new CreateOrderCommandResult
                 {
+                    Result = CreateOrderCommandResultType.Success,
                     OrderId = order.Id
                 };
             }
@@ -68,6 +76,7 @@ namespace HurryUpHaul.Domain.Commands
                 // 23503 = foreign_key_violation
                 return new CreateOrderCommandResult
                 {
+                    Result = CreateOrderCommandResultType.RestaurantNotFound,
                     Errors = [$"Restaurant with ID '{request.RestaurantId}' not found."]
                 };
             }

@@ -21,9 +21,15 @@ namespace HurryUpHaul.Domain.Commands
         public required string Password { get; init; }
     }
 
+    public enum AuthenticateUserCommandResultType
+    {
+        Success,
+        InvalidUsernameOrPassword
+    }
+
     public class AuthenticateUserCommandResult
     {
-        public bool Success { get; init; }
+        public AuthenticateUserCommandResultType Result { get; init; }
         public string Token { get; init; }
         public string[] Errors { get; init; }
     }
@@ -48,7 +54,7 @@ namespace HurryUpHaul.Domain.Commands
             {
                 return new AuthenticateUserCommandResult
                 {
-                    Success = false,
+                    Result = AuthenticateUserCommandResultType.InvalidUsernameOrPassword,
                     Errors = ["Invalid username or password."]
                 };
             }
@@ -58,7 +64,7 @@ namespace HurryUpHaul.Domain.Commands
             {
                 return new AuthenticateUserCommandResult
                 {
-                    Success = false,
+                    Result = AuthenticateUserCommandResultType.InvalidUsernameOrPassword,
                     Errors = ["Invalid username or password."]
                 };
             }
@@ -68,7 +74,7 @@ namespace HurryUpHaul.Domain.Commands
             var token = GenerateToken(user, roles);
             return new AuthenticateUserCommandResult
             {
-                Success = true,
+                Result = AuthenticateUserCommandResultType.Success,
                 Token = token
             };
         }
