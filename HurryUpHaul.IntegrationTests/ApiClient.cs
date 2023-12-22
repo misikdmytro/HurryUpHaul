@@ -19,6 +19,7 @@ namespace HurryUpHaul.IntegrationTests
         Task<AuthenticateUserResponse> AuthenticateUser(AuthenticateUserRequest request);
         Task<MeResponse> Me(string token);
         Task AdminUpdate(AdminUpdateUserRequest request, string token);
+        Task<GetCurrentUserOrdersResponse> GetCurrentUserOrders(int pageSize, int pageNumber, string token);
     }
 
     internal class ApiClient : IApiClient
@@ -171,6 +172,21 @@ namespace HurryUpHaul.IntegrationTests
                 .WithOAuthBearerToken(token)
                 .AllowHttpStatus(200)
                 .PutJsonAsync(request);
+        }
+
+        public Task<GetCurrentUserOrdersResponse> GetCurrentUserOrders(int pageSize, int pageNumber, string token)
+        {
+            return _client
+                .Request()
+                .AppendPathSegment("api")
+                .AppendPathSegment("users")
+                .AppendPathSegment("me")
+                .AppendPathSegment("orders")
+                .SetQueryParam("pageSize", pageSize)
+                .SetQueryParam("pageNumber", pageNumber)
+                .WithOAuthBearerToken(token)
+                .AllowHttpStatus(200)
+                .GetJsonAsync<GetCurrentUserOrdersResponse>();
         }
 
         public void Dispose()

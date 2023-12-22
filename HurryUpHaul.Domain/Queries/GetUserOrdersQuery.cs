@@ -21,7 +21,6 @@ namespace HurryUpHaul.Domain.Queries
     public class GetUserOrdersQueryResult
     {
         public IEnumerable<Order> Orders { get; init; }
-        public string[] Errors { get; set; }
     }
 
     internal class GetUserOrdersQueryHandler : BaseRequestHandler<GetUserOrdersQuery, GetUserOrdersQueryResult>

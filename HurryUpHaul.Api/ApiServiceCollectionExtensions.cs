@@ -4,6 +4,7 @@ using HurryUpHaul.Api.Helpers;
 using HurryUpHaul.Api.Validators;
 
 using HurryUpHaul.Contracts.Http;
+using HurryUpHaul.Contracts.Models;
 
 using Microsoft.AspNetCore.Authorization;
 
@@ -19,7 +20,8 @@ namespace HurryUpHaul.Api
                 .AddScoped<IValidator<RegisterUserRequest>, RegisterUserRequestValidator>()
                 .AddScoped<IValidator<AuthenticateUserRequest>, AuthenticateUserRequestValidator>()
                 .AddScoped<IValidator<AdminUpdateUserRequest>, AdminUpdateUserRequestValidator>()
-                .AddScoped<IValidator<CreateRestaurantRequest>, CreateRestaurantRequestValidator>();
+                .AddScoped<IValidator<CreateRestaurantRequest>, CreateRestaurantRequestValidator>()
+                .AddScoped<IValidator<Paging>, PagingValidator>();
         }
     }
 }

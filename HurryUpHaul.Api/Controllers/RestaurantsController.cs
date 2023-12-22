@@ -24,11 +24,15 @@ namespace HurryUpHaul.Api.Controllers
     {
         private readonly IMediator _mediator;
         private readonly IValidator<CreateRestaurantRequest> _createRestaurantValidator;
+        private readonly IValidator<Paging> _pagingValidator;
 
-        public RestaurantsController(IMediator mediator, IValidator<CreateRestaurantRequest> createRestaurantValidator)
+        public RestaurantsController(IMediator mediator,
+            IValidator<CreateRestaurantRequest> createRestaurantValidator,
+            IValidator<Paging> pagingValidator)
         {
             _mediator = mediator;
             _createRestaurantValidator = createRestaurantValidator;
+            _pagingValidator = pagingValidator;
         }
 
         /// <summary>
@@ -176,27 +180,12 @@ namespace HurryUpHaul.Api.Controllers
             [FromQuery] int pageNumber = 1,
             CancellationToken cancellationToken = default)
         {
-            if (pageSize < 1 || pageNumber < 1 || pageSize > 1000)
+            var pagingValidationResult = await _pagingValidator.ValidateAsync(new Paging(pageSize, pageNumber), cancellationToken);
+            if (!pagingValidationResult.IsValid)
             {
-                List<string> errors = [];
-                if (pageSize < 1)
-                {
-                    errors.Add("Page size must be greater than 0.");
-                }
-
-                if (pageNumber < 1)
-                {
-                    errors.Add("Page number must be greater than 0.");
-                }
-
-                if (pageSize > 1000)
-                {
-                    errors.Add("Page size must be less than or equal to 1000.");
-                }
-
                 return BadRequest(new ErrorResponse
                 {
-                    Errors = errors
+                    Errors = pagingValidationResult.Errors.Select(e => e.ErrorMessage).ToArray()
                 });
             }
 

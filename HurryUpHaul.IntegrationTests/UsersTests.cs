@@ -312,5 +312,92 @@ namespace HurryUpHaul.IntegrationTests
                 responseContent.Errors.First().Should().Be("'Roles' must not be empty.");
             }
         }
+
+        [Fact]
+        public async Task GetUserOrdersShouldReturnIt()
+        {
+            // 1. create user
+            var user = await CreateTestUser();
+            var admin = await CreateTestUser("admin");
+
+            // 2. create restaurant
+            var restaurantResult = await _apiClient.CreateRestaurant(new CreateRestaurantRequest
+            {
+                Name = _faker.Company.CompanyName(),
+                ManagersIds = [admin.Id]
+            }, admin.Token);
+
+            var expectedOrders = Enumerable.Empty<string>();
+
+            for (int i = 0; i < 10; i++)
+            {
+                var createOrderRequest = new CreateOrderRequest
+                {
+                    RestaurantId = restaurantResult.RestaurantId,
+                    Details = _faker.Lorem.Sentence(),
+                };
+
+                var createOrderResult = await _apiClient.CreateOrder(createOrderRequest, user.Token);
+
+                // page requested later
+                if (i >= 1 && i <= 3)
+                {
+                    expectedOrders = expectedOrders.Prepend(createOrderResult.OrderId);
+                }
+            }
+
+            // 3. get orders
+            var getOrdersResult = await _apiClient.GetCurrentUserOrders(3, 3, user.Token);
+
+            getOrdersResult.Should().NotBeNull();
+            getOrdersResult.Orders.Select(x => x.Id).Should().BeEquivalentTo(expectedOrders);
+        }
+
+
+        [Theory]
+        [InlineData(0, 10, "'Page Size' must be greater than '0'.")]
+        [InlineData(10, 0, "'Page Number' must be greater than '0'.")]
+        [InlineData(-1, 10, "'Page Size' must be greater than '0'.")]
+        [InlineData(10, -1, "'Page Number' must be greater than '0'.")]
+        [InlineData(-1, -1, "'Page Size' must be greater than '0'.", "'Page Number' must be greater than '0'.")]
+        [InlineData(1001, 1, "'Page Size' must be less than or equal to '1000'.")]
+        [InlineData(1001, -1, "'Page Size' must be less than or equal to '1000'.", "'Page Number' must be greater than '0'.")]
+        public async Task GetCurrentUserOrdersShouldReturnBadRequestWhenPageSizeOrPageNumberIsInvalid(int pageSize, int pageNumber, params string[] errors)
+        {
+            // Arrange
+            var user = await CreateTestUser();
+
+            // Act
+            try
+            {
+                await _apiClient.GetCurrentUserOrders(pageSize, pageNumber, user.Token);
+
+                Assert.Fail("Expected FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                // Assert
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+
+                var result = await ex.GetResponseJsonAsync<ErrorResponse>();
+
+                result.Should().NotBeNull();
+                result.Errors.Should().BeEquivalentTo(errors);
+            }
+        }
+
+        [Fact]
+        public async Task GetCurrentUserOrdersShouldReturnEmptyWhenNoOrders()
+        {
+            // Arrange
+            var user = await CreateTestUser();
+
+            // Act
+            var result = await _apiClient.GetCurrentUserOrders(1, 1, user.Token);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Orders.Should().BeEmpty();
+        }
     }
 }

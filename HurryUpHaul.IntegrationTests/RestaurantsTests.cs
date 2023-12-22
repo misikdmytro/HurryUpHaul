@@ -247,13 +247,13 @@ namespace HurryUpHaul.IntegrationTests
         }
 
         [Theory]
-        [InlineData(0, 10, "Page size must be greater than 0.")]
-        [InlineData(10, 0, "Page number must be greater than 0.")]
-        [InlineData(-1, 10, "Page size must be greater than 0.")]
-        [InlineData(10, -1, "Page number must be greater than 0.")]
-        [InlineData(-1, -1, "Page size must be greater than 0.", "Page number must be greater than 0.")]
-        [InlineData(1001, 1, "Page size must be less than or equal to 1000.")]
-        [InlineData(1001, -1, "Page size must be less than or equal to 1000.", "Page number must be greater than 0.")]
+        [InlineData(0, 10, "'Page Size' must be greater than '0'.")]
+        [InlineData(10, 0, "'Page Number' must be greater than '0'.")]
+        [InlineData(-1, 10, "'Page Size' must be greater than '0'.")]
+        [InlineData(10, -1, "'Page Number' must be greater than '0'.")]
+        [InlineData(-1, -1, "'Page Size' must be greater than '0'.", "'Page Number' must be greater than '0'.")]
+        [InlineData(1001, 1, "'Page Size' must be less than or equal to '1000'.")]
+        [InlineData(1001, -1, "'Page Size' must be less than or equal to '1000'.", "'Page Number' must be greater than '0'.")]
         public async Task GetRestaurantOrdersShouldReturnBadRequestWhenPageSizeOrPageNumberIsInvalid(int pageSize, int pageNumber, params string[] errors)
         {
             // Arrange
