@@ -11,7 +11,8 @@ RUN dotnet restore HurryUpHaul.sln
 
 COPY . .
 WORKDIR /source/HurryUpHaul.Api
-RUN dotnet publish -c release -o /app --no-restore
+RUN dotnet build -c release --no-restore
+RUN dotnet publish -c release -o /app --no-restore --no-build
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app

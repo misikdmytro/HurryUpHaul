@@ -400,5 +400,94 @@ namespace HurryUpHaul.IntegrationTests
                 result.Errors.First().Should().Be($"User '{user.Username}' is not authorized to update order with ID '{createResult.OrderId}'.");
             }
         }
+
+        [Theory]
+        [InlineData(OrderStatus.Created)]
+        [InlineData(OrderStatus.OrderAccepted, OrderStatus.Completed)]
+        [InlineData(OrderStatus.OrderAccepted, OrderStatus.InProgress, OrderStatus.Completed)]
+        [InlineData(OrderStatus.OrderAccepted, OrderStatus.InProgress, OrderStatus.WaitingDelivery, OrderStatus.WaitingDelivery)]
+        public async Task UpdateOrderShouldReturnBadRequestForWrongTransition(params OrderStatus[] statuses)
+        {
+            // 1. create restaurant
+            var admin = await CreateTestUser("admin");
+
+            var restaurant = await _apiClient.CreateRestaurant(new CreateRestaurantRequest
+            {
+                Name = _faker.Company.CompanyName(),
+                ManagersIds = [admin.Id]
+            }, admin.Token);
+
+            // 2. create order
+            var user = await CreateTestUser();
+
+            var createRequest = new CreateOrderRequest
+            {
+                RestaurantId = restaurant.RestaurantId,
+                Details = _faker.Lorem.Sentence()
+            };
+            var createResult = await _apiClient.CreateOrder(createRequest, user.Token);
+
+            foreach (var status in statuses.SkipLast(1))
+            {
+                // 3. update order
+                await _apiClient.UpdateOrder(createResult.OrderId, new UpdateOrderRequest
+                {
+                    Status = status
+                }, admin.Token);
+            }
+
+            // 4. wrong update
+            var wrongStatus = statuses.Last();
+
+            try
+            {
+                await _apiClient.UpdateOrder(createResult.OrderId, new UpdateOrderRequest
+                {
+                    Status = wrongStatus
+                }, admin.Token);
+
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+
+                var result = await ex.GetResponseJsonAsync<ErrorResponse>();
+
+                result.Should().NotBeNull();
+                result.Errors.Should().HaveCount(1);
+                result.Errors.First().Should().Be($"Order with ID '{createResult.OrderId}' cannot be updated to status '{wrongStatus:G}'.");
+            }
+        }
+
+        [Fact]
+        public async Task UpdateOrderShouldReturnNotFoundWhenOrderDoesNotExist()
+        {
+            // Arrange
+            var admin = await CreateTestUser("admin");
+            var orderId = Guid.NewGuid().ToString();
+
+            try
+            {
+                // Act
+                await _apiClient.UpdateOrder(orderId, new UpdateOrderRequest
+                {
+                    Status = OrderStatus.OrderAccepted
+                }, admin.Token);
+
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                // Assert
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
+
+                var responseContent = await ex.GetResponseJsonAsync<ErrorResponse>();
+
+                responseContent.Should().NotBeNull();
+                responseContent.Errors.Should().HaveCount(1);
+                responseContent.Errors.First().Should().Be($"Order with ID '{orderId}' not found.");
+            }
+        }
     }
 }
