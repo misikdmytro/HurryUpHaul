@@ -15,7 +15,7 @@ namespace HurryUpHaul.Api.Extensions
         public static bool CanSeeOrder(this ClaimsPrincipal user, Order order, string[] managersList)
         {
             return order.CreatedBy == user.Identity.Name ||
-                user.IsInRole(Roles.Admin) ||
+                IsInRole(user, Roles.Admin) ||
                 managersList.Contains(user.Identity.Name);
         }
 
