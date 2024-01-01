@@ -15,6 +15,7 @@ namespace HurryUpHaul.IntegrationTests
         Task<CreateOrderResponse> CreateOrder(CreateOrderRequest request);
         Task<CreateOrderResponse> CreateOrder(CreateOrderRequest request, string token);
         Task<GetOrderResponse> GetOrder(string orderId, string token);
+        Task UpdateOrder(string orderId, UpdateOrderRequest request, string token);
         Task<RegisterUserResponse> RegisterUser(RegisterUserRequest request);
         Task<AuthenticateUserResponse> AuthenticateUser(AuthenticateUserRequest request);
         Task<MeResponse> Me(string token);
@@ -137,6 +138,18 @@ namespace HurryUpHaul.IntegrationTests
                 .WithOAuthBearerToken(token)
                 .AllowHttpStatus(200)
                 .GetJsonAsync<GetOrderResponse>();
+        }
+
+        public Task UpdateOrder(string orderId, UpdateOrderRequest request, string token)
+        {
+            return _client
+                .Request()
+                .AppendPathSegment("api")
+                .AppendPathSegment("orders")
+                .AppendPathSegment(orderId)
+                .WithOAuthBearerToken(token)
+                .AllowHttpStatus(204)
+                .PutJsonAsync(request);
         }
 
         public Task<MeResponse> Me(string token)

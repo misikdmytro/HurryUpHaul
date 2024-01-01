@@ -23,7 +23,7 @@ namespace HurryUpHaul.Domain.Commands
         Success,
         OrderNotFound,
         WrongOrderStatus,
-        NotAuthorized
+        Forbidden
     }
 
     public class UpdateOrderCommandResult
@@ -70,16 +70,16 @@ namespace HurryUpHaul.Domain.Commands
                 return new UpdateOrderCommandResult
                 {
                     Result = UpdateOrderCommandResultType.OrderNotFound,
-                    Errors = [$"Order with ID '{request.OrderId}' not found"]
+                    Errors = [$"Order with ID '{request.OrderId}' not found."]
                 };
             }
 
-            if (!request.IsAdmin || !order.Restaurant.Managers.Any(m => m.UserName == request.Username))
+            if (!request.IsAdmin && !order.Restaurant.Managers.Any(m => m.UserName == request.Username))
             {
                 return new UpdateOrderCommandResult
                 {
-                    Result = UpdateOrderCommandResultType.NotAuthorized,
-                    Errors = [$"User '{request.Username}' is not authorized to update order with ID '{request.OrderId}'"]
+                    Result = UpdateOrderCommandResultType.Forbidden,
+                    Errors = [$"User '{request.Username}' is not authorized to update order with ID '{request.OrderId}'."]
                 };
             }
 
@@ -90,7 +90,7 @@ namespace HurryUpHaul.Domain.Commands
                 return new UpdateOrderCommandResult
                 {
                     Result = UpdateOrderCommandResultType.WrongOrderStatus,
-                    Errors = [$"Order with ID '{request.OrderId}' cannot be updated to status '{request.Status}'"]
+                    Errors = [$"Order with ID '{request.OrderId}' cannot be updated to status '{request.Status}'."]
                 };
             }
 

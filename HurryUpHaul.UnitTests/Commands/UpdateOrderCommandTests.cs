@@ -91,7 +91,7 @@ namespace HurryUpHaul.UnitTests.Commands
 
             // Assert
             result.Should().NotBeNull();
-            result.Result.Should().Be(UpdateOrderCommandResultType.NotAuthorized);
+            result.Result.Should().Be(UpdateOrderCommandResultType.Forbidden);
         }
 
         [Theory]

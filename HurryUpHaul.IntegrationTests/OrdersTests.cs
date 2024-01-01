@@ -270,5 +270,135 @@ namespace HurryUpHaul.IntegrationTests
                 result.Errors.First().Should().Be($"Restaurant with ID '{restaurantId}' not found.");
             }
         }
+
+        [Theory]
+        [InlineData(OrderStatus.OrderAccepted)]
+        [InlineData(OrderStatus.Cancelled)]
+        [InlineData(OrderStatus.OrderAccepted, OrderStatus.InProgress, OrderStatus.WaitingDelivery, OrderStatus.Delivering, OrderStatus.Completed)]
+        public async Task UpdateShouldBeAllowedForAdmin(params OrderStatus[] statuses)
+        {
+            // 1. create restaurant
+            var admin = await CreateTestUser("admin");
+            var owner = await CreateTestUser();
+
+            var restaurant = await _apiClient.CreateRestaurant(new CreateRestaurantRequest
+            {
+                Name = _faker.Company.CompanyName(),
+                ManagersIds = [owner.Id]
+            }, admin.Token);
+
+            // 2. create order
+            var user = await CreateTestUser();
+
+            var createRequest = new CreateOrderRequest
+            {
+                RestaurantId = restaurant.RestaurantId,
+                Details = _faker.Lorem.Sentence()
+            };
+            var createResult = await _apiClient.CreateOrder(createRequest, user.Token);
+
+            // 3. update order
+            foreach (var status in statuses)
+            {
+                await _apiClient.UpdateOrder(createResult.OrderId, new UpdateOrderRequest
+                {
+                    Status = status
+                }, admin.Token);
+
+                // 4. get order
+                var getResult = await _apiClient.GetOrder(createResult.OrderId, admin.Token);
+
+                getResult.Should().NotBeNull();
+                getResult.Order.Should().NotBeNull();
+                getResult.Order.Status.Should().Be(status);
+            }
+        }
+
+        [Theory]
+        [InlineData(OrderStatus.OrderAccepted)]
+        [InlineData(OrderStatus.Cancelled)]
+        [InlineData(OrderStatus.OrderAccepted, OrderStatus.InProgress, OrderStatus.WaitingDelivery, OrderStatus.Delivering, OrderStatus.Completed)]
+        public async Task UpdateShouldBeAllowedForManagers(params OrderStatus[] statuses)
+        {
+            // 1. create restaurant
+            var admin = await CreateTestUser("admin");
+            var owner = await CreateTestUser();
+
+            var restaurant = await _apiClient.CreateRestaurant(new CreateRestaurantRequest
+            {
+                Name = _faker.Company.CompanyName(),
+                ManagersIds = [owner.Id]
+            }, admin.Token);
+
+            // 2. create order
+            var user = await CreateTestUser();
+
+            var createRequest = new CreateOrderRequest
+            {
+                RestaurantId = restaurant.RestaurantId,
+                Details = _faker.Lorem.Sentence()
+            };
+            var createResult = await _apiClient.CreateOrder(createRequest, user.Token);
+
+            // 3. update order
+            foreach (var status in statuses)
+            {
+                await _apiClient.UpdateOrder(createResult.OrderId, new UpdateOrderRequest
+                {
+                    Status = status
+                }, owner.Token);
+
+                // 4. get order
+                var getResult = await _apiClient.GetOrder(createResult.OrderId, owner.Token);
+
+                getResult.Should().NotBeNull();
+                getResult.Order.Should().NotBeNull();
+                getResult.Order.Status.Should().Be(status);
+            }
+        }
+
+        [Fact]
+        public async Task UpdateOrderShouldBeForbiddenForUsers()
+        {
+            // 1. create restaurant
+            var admin = await CreateTestUser("admin");
+
+            var restaurant = await _apiClient.CreateRestaurant(new CreateRestaurantRequest
+            {
+                Name = _faker.Company.CompanyName(),
+                ManagersIds = [admin.Id]
+            }, admin.Token);
+
+            // 2. create order
+            var user = await CreateTestUser();
+
+            var createRequest = new CreateOrderRequest
+            {
+                RestaurantId = restaurant.RestaurantId,
+                Details = _faker.Lorem.Sentence()
+            };
+            var createResult = await _apiClient.CreateOrder(createRequest, user.Token);
+
+            try
+            {
+                // 3. update order
+                await _apiClient.UpdateOrder(createResult.OrderId, new UpdateOrderRequest
+                {
+                    Status = OrderStatus.OrderAccepted
+                }, user.Token);
+
+                Assert.Fail("Should have thrown FlurlHttpException");
+            }
+            catch (FlurlHttpException ex)
+            {
+                ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.Forbidden);
+
+                var result = await ex.GetResponseJsonAsync<ErrorResponse>();
+
+                result.Should().NotBeNull();
+                result.Errors.Should().HaveCount(1);
+                result.Errors.First().Should().Be($"User '{user.Username}' is not authorized to update order with ID '{createResult.OrderId}'.");
+            }
+        }
     }
 }

@@ -7,7 +7,7 @@ namespace HurryUpHaul.Api.Extensions
 {
     public static class ClaimsPrincipalExtensions
     {
-        public static bool IsInRole(this ClaimsPrincipal user, string role)
+        public static bool HasRole(this ClaimsPrincipal user, string role)
         {
             return user.Claims.Roles().Any(r => r == role);
         }
@@ -15,7 +15,7 @@ namespace HurryUpHaul.Api.Extensions
         public static bool CanSeeOrder(this ClaimsPrincipal user, Order order, string[] managersList)
         {
             return order.CreatedBy == user.Identity.Name ||
-                IsInRole(user, Roles.Admin) ||
+                user.HasRole(Roles.Admin) ||
                 managersList.Contains(user.Identity.Name);
         }
 
