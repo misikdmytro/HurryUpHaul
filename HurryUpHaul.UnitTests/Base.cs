@@ -7,7 +7,7 @@ using HurryUpHaul.Domain.Profiles;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace HurryUpHaul.UnitTests.Commands
+namespace HurryUpHaul.UnitTests
 {
     public class Base : IAsyncDisposable
     {

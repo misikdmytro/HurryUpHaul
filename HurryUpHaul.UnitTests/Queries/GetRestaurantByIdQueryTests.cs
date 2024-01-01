@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 using Moq;
 
-namespace HurryUpHaul.UnitTests.Commands
+namespace HurryUpHaul.UnitTests.Queries
 {
     public class GetRestaurantByIdQueryTests : Base
     {

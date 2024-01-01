@@ -16,6 +16,7 @@ namespace HurryUpHaul.IntegrationTests
         public string Token { get; init; }
     }
 
+    [Collection("IntegrationTests")]
     public class Base : IClassFixture<CustomWebApplicationFactory<Program>>, IDisposable
     {
         protected readonly Faker _faker;
