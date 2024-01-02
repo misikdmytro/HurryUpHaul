@@ -5,6 +5,7 @@ using System.Text;
 
 using HurryUpHaul.Api;
 using HurryUpHaul.Api.Constants;
+using HurryUpHaul.Api.Extensions;
 using HurryUpHaul.Api.Filters;
 using HurryUpHaul.Api.Helpers;
 using HurryUpHaul.Domain;
@@ -124,7 +125,7 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsDocker())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
