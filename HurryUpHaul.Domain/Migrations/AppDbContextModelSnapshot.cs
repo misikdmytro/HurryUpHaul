@@ -56,7 +56,8 @@ namespace HurryUpHaul.Domain.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt");
+                    b.HasIndex("CreatedAt")
+                        .IsDescending();
 
                     b.HasIndex("CreatedBy");
 

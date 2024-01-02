@@ -263,7 +263,8 @@ namespace HurryUpHaul.Domain.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_CreatedAt",
                 table: "Orders",
-                column: "CreatedAt");
+                column: "CreatedAt",
+                descending: new bool[0]);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_CreatedBy",

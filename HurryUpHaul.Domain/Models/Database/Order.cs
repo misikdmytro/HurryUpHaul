@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace HurryUpHaul.Domain.Models.Database
 {
     [Index(nameof(CreatedBy))]
-    [Index(nameof(CreatedAt))]
+    [Index(nameof(CreatedAt), IsDescending = [true])]
     internal class Order
     {
         [Key]
