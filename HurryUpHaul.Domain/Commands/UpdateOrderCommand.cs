@@ -8,6 +8,8 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using Polly;
+
 namespace HurryUpHaul.Domain.Commands
 {
     public class UpdateOrderCommand : IRequest<UpdateOrderCommandResult>
@@ -57,7 +59,18 @@ namespace HurryUpHaul.Domain.Commands
             _dateTimeProvider = dateTimeProvider;
         }
 
-        protected override async Task<UpdateOrderCommandResult> HandleInternal(UpdateOrderCommand request, CancellationToken cancellationToken)
+        protected override Task<UpdateOrderCommandResult> HandleInternal(UpdateOrderCommand request, CancellationToken cancellationToken)
+        {
+            return Policy
+                .Handle<DbUpdateConcurrencyException>()
+                .RetryAsync(5, (exception, retryCount) =>
+                {
+                    Logger.LogWarning(exception, "Failed to update order with ID '{OrderId}' due to concurrency exception. Retrying...", request.OrderId);
+                })
+                .ExecuteAsync((token) => UpdateOrder(request, token), cancellationToken);
+        }
+
+        private async Task<UpdateOrderCommandResult> UpdateOrder(UpdateOrderCommand request, CancellationToken cancellationToken)
         {
             var order = await _dbContext.Orders
                 .Include(o => o.Restaurant)
@@ -96,6 +109,7 @@ namespace HurryUpHaul.Domain.Commands
 
             order.Status = newStatus;
             order.LastUpdatedAt = _dateTimeProvider.Now;
+            order.Version = Guid.NewGuid();
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 

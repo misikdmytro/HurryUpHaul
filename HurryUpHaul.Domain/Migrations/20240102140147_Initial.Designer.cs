@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HurryUpHaul.Domain.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20231222110906_Initial")]
+    [Migration("20240102140147_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -52,6 +52,10 @@ namespace HurryUpHaul.Domain.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 

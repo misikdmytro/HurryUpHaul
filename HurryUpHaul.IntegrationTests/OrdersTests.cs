@@ -489,5 +489,84 @@ namespace HurryUpHaul.IntegrationTests
                 responseContent.Errors.First().Should().Be($"Order with ID '{orderId}' not found.");
             }
         }
+
+        [Fact]
+        public async Task UpdateOrderShouldDoItConcurrently()
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                // 1. create restaurant
+                var admin = await CreateTestUser("admin");
+
+                var restaurant = await _apiClient.CreateRestaurant(new CreateRestaurantRequest
+                {
+                    Name = _faker.Company.CompanyName(),
+                    ManagersIds = [admin.Id]
+                }, admin.Token);
+
+                // 2. create order
+                var user = await CreateTestUser();
+
+                var createRequest = new CreateOrderRequest
+                {
+                    RestaurantId = restaurant.RestaurantId,
+                    Details = _faker.Lorem.Sentence()
+                };
+                var createResult = await _apiClient.CreateOrder(createRequest, user.Token);
+
+                // 3. update order
+                var update1 = _apiClient.UpdateOrder(createResult.OrderId, new UpdateOrderRequest
+                {
+                    Status = OrderStatus.OrderAccepted
+                }, admin.Token);
+
+                var update2 = _apiClient.UpdateOrder(createResult.OrderId, new UpdateOrderRequest
+                {
+                    Status = OrderStatus.OrderAccepted
+                }, admin.Token);
+
+                bool update1Failed = false;
+                try
+                {
+                    await update1;
+                }
+                catch (FlurlHttpException ex)
+                {
+                    update1Failed = true;
+
+                    ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+
+                    var responseContent = await ex.GetResponseJsonAsync<ErrorResponse>();
+
+                    responseContent.Should().NotBeNull();
+                    responseContent.Errors.Should().HaveCount(1);
+                    responseContent.Errors.First().Should().Be($"Order with ID '{createResult.OrderId}' cannot be updated to status 'OrderAccepted'.");
+                }
+
+                try
+                {
+                    await update2;
+                    if (!update1Failed)
+                    {
+                        Assert.Fail("Both updates succeeded.");
+                    }
+                }
+                catch (FlurlHttpException ex)
+                {
+                    if (update1Failed)
+                    {
+                        Assert.Fail("Both updates failed.");
+                    }
+
+                    ex.Call.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+
+                    var responseContent = await ex.GetResponseJsonAsync<ErrorResponse>();
+
+                    responseContent.Should().NotBeNull();
+                    responseContent.Errors.Should().HaveCount(1);
+                    responseContent.Errors.First().Should().Be($"Order with ID '{createResult.OrderId}' cannot be updated to status 'OrderAccepted'.");
+                }
+            }
+        }
     }
 }

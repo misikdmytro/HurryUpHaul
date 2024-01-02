@@ -26,6 +26,9 @@ namespace HurryUpHaul.Domain.Models.Database
 
         public DateTimeOffset LastUpdatedAt { get; set; }
 
+        [ConcurrencyCheck]
+        public Guid Version { get; set; }
+
         public virtual Restaurant Restaurant { get; set; }
 
         [Required]

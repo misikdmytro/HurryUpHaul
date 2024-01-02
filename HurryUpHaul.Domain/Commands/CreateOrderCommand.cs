@@ -59,7 +59,8 @@ namespace HurryUpHaul.Domain.Commands
                     CreatedAt = now,
                     CreatedBy = request.Customer,
                     LastUpdatedAt = now,
-                    RestaurantId = request.RestaurantId
+                    RestaurantId = request.RestaurantId,
+                    Version = Guid.NewGuid()
                 };
 
                 await _dbContext.Orders.AddAsync(order, cancellationToken);

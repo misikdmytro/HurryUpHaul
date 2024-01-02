@@ -204,6 +204,7 @@ namespace HurryUpHaul.Domain.Migrations
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     LastUpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Version = table.Column<Guid>(type: "uuid", nullable: false),
                     RestaurantId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
