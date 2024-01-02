@@ -10,16 +10,8 @@ namespace HurryUpHaul.Domain.Profiles
         {
             CreateMap<Order, Contracts.Models.Order>();
             CreateMap<Restaurant, Contracts.Models.Restaurant>()
-                .ForMember(dest => dest.Managers, opt =>
-                {
-                    opt.Condition(src => src.Managers != null);
-                    opt.MapFrom(src => src.Managers.Select(x => x.UserName));
-                })
-                .ForMember(dest => dest.CreatedAt, opt =>
-                {
-                    opt.Condition(src => src.CreatedAt != default);
-                    opt.MapFrom(src => src.CreatedAt);
-                });
+                .ForMember(dest => dest.Managers, opt => opt.MapFrom(src => src.Managers.Select(x => x.UserName)))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt));
         }
     }
 }

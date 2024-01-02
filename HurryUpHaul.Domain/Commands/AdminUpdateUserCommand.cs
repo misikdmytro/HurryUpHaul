@@ -67,7 +67,7 @@ namespace HurryUpHaul.Domain.Commands
                     }
                 }
 
-                var result = await _userManager.AddToRolesAsync(user, request.RoleToAdd.Except(roles));
+                var result = await _userManager.AddToRolesAsync(user, rolesToAdd);
                 if (!result.Succeeded)
                 {
                     return new AdminUpdateUserCommandResult
@@ -80,7 +80,7 @@ namespace HurryUpHaul.Domain.Commands
 
             if (request.RoleToRemove.Length != 0)
             {
-                var result = await _userManager.RemoveFromRolesAsync(user, request.RoleToRemove.Intersect(roles));
+                var result = await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
                 if (!result.Succeeded)
                 {
                     return new AdminUpdateUserCommandResult

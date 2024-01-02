@@ -8,7 +8,6 @@ namespace HurryUpHaul.Api.Validators
 {
     internal class AdminUpdateUserRequestValidator : AbstractValidator<AdminUpdateUserRequest>
     {
-        public const string AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
         public static string[] AvailableRoles = [Roles.User, Roles.Admin];
 
         public AdminUpdateUserRequestValidator()
