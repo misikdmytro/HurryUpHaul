@@ -2,7 +2,7 @@
 
 ## Description
 
-This is a simple web application that allows to create orders in restaurant. It is built with ASP.NET 8.0. Web service is described in [this post](https://todo.com).
+This is a simple web application that allows to create orders in restaurant. It is built with ASP.NET 8.0. Web service is described in [this post](https://medium.com/@dmytro.misik/writing-a-web-service-using-c-ddbda1a4a21c).
 
 ## Installation
 
