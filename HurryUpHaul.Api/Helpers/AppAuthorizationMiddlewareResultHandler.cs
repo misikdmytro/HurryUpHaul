@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authorization.Policy;
 
 namespace HurryUpHaul.Api.Helpers
 {
-    public class AppAuthorizationMiddlewareResultHandler : IAuthorizationMiddlewareResultHandler
+    internal class AppAuthorizationMiddlewareResultHandler : IAuthorizationMiddlewareResultHandler
     {
         private readonly AuthorizationMiddlewareResultHandler _defaultHandler = new();
 
